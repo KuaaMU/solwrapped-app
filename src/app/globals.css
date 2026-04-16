@@ -1,26 +1,210 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #09090b;
+  --bg-card: #111113;
+  --bg-elevated: #18181b;
+  --border: #27272a;
+  --border-bright: #3f3f46;
+  --text: #fafafa;
+  --text-muted: #a1a1aa;
+  --text-dim: #52525b;
+  --accent: #22d3ee; /* cyan-400: acid terminal blue */
+  --accent-dim: rgba(34, 211, 238, 0.15);
+  --accent-glow: rgba(34, 211, 238, 0.3);
+  --hot: #f97316; /* orange-500: highlight */
+  --hot-dim: rgba(249, 115, 22, 0.15);
+  --danger: #ef4444;
+  --success: #22c55e;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ---- BASE ---- */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono, 'Geist Mono', 'JetBrains Mono', monospace);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* ---- NOISE TEXTURE OVERLAY ---- */
+.noise {
+  position: relative;
+}
+.noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  pointer-events: none;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+/* ---- SCAN GRID ---- */
+.scan-grid {
+  background-image:
+    linear-gradient(rgba(34, 211, 238, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 211, 238, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ---- CARD (Brutalist) ---- */
+.bcard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  position: relative;
+}
+.bcard:hover {
+  border-color: var(--border-bright);
+}
+
+/* ---- ACCENT BAR (top of cards) ---- */
+.bcard-accent {
+  border-top: 2px solid var(--accent);
+}
+
+/* ---- LABEL TAG ---- */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: var(--font-mono);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  background: var(--bg);
+}
+.tag-accent {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+.tag-hot {
+  border-color: var(--hot);
+  color: var(--hot);
+  background: var(--hot-dim);
+}
+
+/* ---- BIG NUMBER (hero stat) ---- */
+.big-num {
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* ---- MONO LABEL ---- */
+.mono-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+/* ---- DIVIDER ---- */
+.divider {
+  height: 1px;
+  background: var(--border);
+  width: 100%;
+}
+
+/* ---- ACCENT BUTTON ---- */
+.btn-accent {
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 12px 24px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  font-family: var(--font-mono);
+}
+.btn-accent:hover {
+  opacity: 0.85;
+}
+.btn-accent:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ---- PROGRESS BAR ---- */
+.progress-track {
+  height: 3px;
+  background: var(--border);
+  width: 100%;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+
+/* ---- SCAN LINE ANIMATION ---- */
+@keyframes scanline {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+.scanline {
+  animation: scanline 3s ease-in-out infinite;
+}
+
+/* ---- BLINK CURSOR ---- */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.cursor-blink::after {
+  content: '█';
+  animation: blink 1s step-end infinite;
+  color: var(--accent);
+  margin-left: 2px;
+}
+
+/* ---- REVEAL ANIMATION ---- */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.reveal {
+  animation: reveal-up 0.4s ease-out forwards;
+}
+.reveal-delay-1 { animation-delay: 0.1s; opacity: 0; }
+.reveal-delay-2 { animation-delay: 0.2s; opacity: 0; }
+.reveal-delay-3 { animation-delay: 0.3s; opacity: 0; }
+.reveal-delay-4 { animation-delay: 0.4s; opacity: 0; }
+
+/* ---- SCROLLBAR ---- */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-bright);
 }
