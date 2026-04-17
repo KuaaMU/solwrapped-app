@@ -36,6 +36,7 @@ export async function GET(
       'Content-Type': 'image/png',
       'Cache-Control': 'public, max-age=604800, immutable',
       'X-Card-Source': result.source,
+      'X-Card-Provider': result.provider,
     },
   });
 }
