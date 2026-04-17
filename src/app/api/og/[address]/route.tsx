@@ -24,7 +24,7 @@ export async function GET(
   const totalTxs = report?.profile.totalTransactions || 0;
   const activeDays = report?.profile.activeDays || 0;
   const protocols = report?.profile.activeProtocols.length || 0;
-  const volume = report?.profile.estimatedVolumeSOL?.toFixed(0) || '0';
+  const volume = report?.profile.estimatedVolumeSOL?.toFixed(1) || '0';
   const shortAddr = `${address.slice(0, 6)}···${address.slice(-4)}`;
 
   // Build data-driven logo SVG → base64 data URI for Satori

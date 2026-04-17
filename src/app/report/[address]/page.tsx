@@ -164,7 +164,7 @@ export default function ReportPage() {
             <StatBlock label="TXS" value={p.totalTransactions.toLocaleString()} />
             <StatBlock label="DAYS" value={String(p.activeDays)} />
             <StatBlock label="PROTOCOLS" value={String(p.activeProtocols.length)} />
-            <StatBlock label="VOLUME" value={`${p.estimatedVolumeSOL.toFixed(0)}◎`} accent />
+            <StatBlock label="VOLUME" value={`${p.estimatedVolumeSOL.toFixed(1)}◎`} accent />
           </motion.div>
 
           <motion.div variants={fadeUp} className="surface contour p-5">
