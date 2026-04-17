@@ -5,6 +5,24 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Logo } from "@/components/Logo";
 
+// Base58 charset used by Solana addresses (excludes 0, O, I, l to avoid lookalikes)
+const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]+$/;
+
+function validateAddress(raw: string): { ok: true } | { ok: false; reason: string } {
+  const trimmed = raw.trim();
+  if (!trimmed) return { ok: false, reason: "EMPTY ADDRESS" };
+  if (trimmed.startsWith("demo-") || trimmed.toLowerCase() === "demo") {
+    return { ok: true };
+  }
+  if (trimmed.length < 32 || trimmed.length > 44) {
+    return { ok: false, reason: "INVALID LENGTH (32-44 CHARS)" };
+  }
+  if (!BASE58_RE.test(trimmed)) {
+    return { ok: false, reason: "INVALID CHARS (BASE58 ONLY)" };
+  }
+  return { ok: true };
+}
+
 export default function Home() {
   const [address, setAddress] = useState("");
   const [error, setError] = useState("");
@@ -13,19 +31,14 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleAnalyze = () => {
-    const trimmed = address.trim();
-    if (!trimmed) {
-      setError("EMPTY ADDRESS");
+    const check = validateAddress(address);
+    if (!check.ok) {
+      setError(check.reason);
       inputRef.current?.focus();
       return;
     }
-    const isDemo = trimmed.startsWith("demo-") || trimmed.toLowerCase() === "demo";
-    if (!isDemo && trimmed.length < 32) {
-      setError("INVALID ADDRESS");
-      return;
-    }
     setError("");
-    router.push(`/report/${trimmed}`);
+    router.push(`/report/${address.trim()}`);
   };
 
   const handleDemoSelect = (value: string) => {

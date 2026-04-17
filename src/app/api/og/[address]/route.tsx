@@ -6,7 +6,7 @@ import { getThemeById } from '@/lib/themes';
 import { generateLogo, profileToLogoParams } from '@/lib/logo-svg';
 import { BADGE_COLORS } from '@/lib/badges';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export async function GET(
   request: NextRequest,

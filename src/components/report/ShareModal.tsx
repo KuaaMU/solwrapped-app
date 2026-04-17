@@ -164,12 +164,7 @@ export function ShareModal({
             <div className="px-6">
               <div className="relative w-full aspect-[1200/630] bg-[var(--bg)] border border-[var(--border)] overflow-hidden rounded-sm">
                 {!loadedTabs[tab] && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-[var(--sol-purple)] animate-pulse" />
-                    <span className="text-[var(--text-tertiary)] text-[10px] font-mono cursor-blink tracking-[0.2em]">
-                      {tab === "ai" ? "GENERATING ARTWORK" : "LOADING CARD"}
-                    </span>
-                  </div>
+                  <LoadingOverlay label={tab === "ai" ? "GENERATING ARTWORK" : "LOADING CARD"} />
                 )}
                 {/* Render both images so switching tabs is instant after first load */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -273,6 +268,28 @@ function TabButton({
     >
       {children}
     </button>
+  );
+}
+
+function LoadingOverlay({ label }: { label: string }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const started = Date.now();
+    const id = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - started) / 1000));
+    }, 250);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+      <div className="w-2 h-2 rounded-full bg-[var(--sol-purple)] animate-pulse" />
+      <span className="text-[var(--text-tertiary)] text-[10px] font-mono cursor-blink tracking-[0.2em]">
+        {label}
+      </span>
+      <span className="text-[var(--text-disabled)] text-[10px] font-mono tabular-nums tracking-wider">
+        {elapsed}s
+      </span>
+    </div>
   );
 }
 
