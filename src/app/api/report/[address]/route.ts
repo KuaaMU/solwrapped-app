@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCachedReport } from '@/lib/cache';
+import { validateAddress } from '@/lib/address';
 
 // SDK endpoint: returns cached report as JSON
 // This is the "Moat" layer — developers can call this API
@@ -9,11 +10,9 @@ export async function GET(
 ) {
   const { address } = await params;
 
-  if (!address || address.length < 32) {
-    return NextResponse.json(
-      { error: 'Invalid Solana address' },
-      { status: 400 }
-    );
+  const check = validateAddress(address);
+  if (!check.ok) {
+    return NextResponse.json({ error: check.reason }, { status: 400 });
   }
 
   const report = getCachedReport(address);

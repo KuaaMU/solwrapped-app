@@ -1,0 +1,202 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
+  <defs>
+    <filter id="glow" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-color="#ffffff" flood-opacity="0.3"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="sg" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="1.5"/>
+    </filter>
+    <filter id="pg" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feFlood flood-color="#ffffff" flood-opacity="0.4"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="solGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feFlood flood-color="#9945FF" flood-opacity="0.15"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="800" height="800" rx="80" fill="#050505"/>
+  
+  <!-- ========== SOLANA PURPLE CHANNEL (左偏 5px) ========== -->
+  <g transform="translate(395, 355)" opacity="0.5" filter="url(#sg)">
+    <!-- 方框等高线：右上角微开（unwrap感） -->
+    <!-- 三边闭合 -->
+    <rect x="-200" y="-200" width="400" height="400" rx="20" fill="none" stroke="#9945FF" stroke-width="1.5" opacity="0.3" 
+          stroke-dasharray="380 20"/>
+    <rect x="-185" y="-185" width="370" height="370" rx="18" fill="none" stroke="#9945FF" stroke-width="2" opacity="0.35"
+          stroke-dasharray="355 20"/>
+    <rect x="-170" y="-170" width="340" height="340" rx="17" fill="none" stroke="#9945FF" stroke-width="2.5" opacity="0.45"
+          stroke-dasharray="325 20"/>
+    <rect x="-155" y="-155" width="310" height="310" rx="16" fill="none" stroke="#9945FF" stroke-width="3.5" opacity="0.6"/>
+    <!-- 右上角缺口弧 -->
+    <path d="M 140,-155 Q 155,-155 155,-140" fill="none" stroke="#9945FF" stroke-width="3.5" opacity="0.6"/>
+    <path d="M 155,-140" fill="none" stroke="#9945FF" stroke-width="3.5" opacity="0.6"/>
+    <!-- 右上角散发光 -->
+    <circle cx="155" cy="-148" r="4" fill="#9945FF" opacity="0.15" filter="url(#sg)"/>
+    
+    <!-- 大圆虚线 -->
+    <circle cx="0" cy="0" r="112" fill="none" stroke="#9945FF" stroke-width="4" stroke-dasharray="14 8" opacity="0.6"/>
+    <!-- 内圆虚线 -->
+    <circle cx="-25" cy="0" r="62" fill="none" stroke="#9945FF" stroke-width="3.5" stroke-dasharray="14 8" opacity="0.6"/>
+    <!-- 粒子 -->
+    <g fill="#9945FF" opacity="0.4">
+      <circle cx="0" cy="-38" r="1.5"/><circle cx="14" cy="-35" r="1.3"/><circle cx="25" cy="-28" r="1.6"/>
+      <circle cx="33" cy="-18" r="1.4"/><circle cx="37" cy="-5" r="1.5"/><circle cx="36" cy="8" r="1.3"/>
+      <circle cx="31" cy="20" r="1.6"/><circle cx="22" cy="30" r="1.4"/><circle cx="10" cy="36" r="1.5"/>
+      <circle cx="-3" cy="38" r="1.3"/><circle cx="-16" cy="35" r="1.6"/><circle cx="-27" cy="28" r="1.4"/>
+      <circle cx="-34" cy="17" r="1.5"/><circle cx="-37" cy="4" r="1.3"/><circle cx="-35" cy="-9" r="1.6"/>
+      <circle cx="-28" cy="-21" r="1.4"/><circle cx="-18" cy="-31" r="1.5"/><circle cx="-5" cy="-37" r="1.3"/>
+    </g>
+    <g fill="#9945FF" opacity="0.55">
+      <circle cx="0" cy="-25" r="1.8"/><circle cx="10" cy="-23" r="1.6"/><circle cx="18" cy="-17" r="1.8"/>
+      <circle cx="23" cy="-8" r="1.5"/><circle cx="25" cy="2" r="1.8"/><circle cx="22" cy="12" r="1.6"/>
+      <circle cx="16" cy="20" r="1.8"/><circle cx="7" cy="24" r="1.5"/><circle cx="-3" cy="25" r="1.8"/>
+      <circle cx="-13" cy="22" r="1.6"/><circle cx="-20" cy="15" r="1.8"/><circle cx="-24" cy="5" r="1.5"/>
+      <circle cx="-23" cy="-6" r="1.8"/><circle cx="-18" cy="-15" r="1.6"/><circle cx="-10" cy="-22" r="1.8"/>
+    </g>
+    <g fill="#9945FF" opacity="0.7">
+      <circle cx="0" cy="-14" r="2"/><circle cx="8" cy="-11" r="1.8"/><circle cx="12" cy="-5" r="2"/>
+      <circle cx="11" cy="3" r="1.8"/><circle cx="6" cy="10" r="2"/><circle cx="-1" cy="13" r="1.8"/>
+      <circle cx="-8" cy="10" r="2"/><circle cx="-12" cy="3" r="1.8"/><circle cx="-10" cy="-5" r="2"/>
+      <circle cx="-5" cy="-11" r="1.8"/>
+    </g>
+  </g>
+  
+  <!-- ========== SOLANA TEAL CHANNEL (右偏 5px) ========== -->
+  <g transform="translate(405, 355)" opacity="0.5" filter="url(#sg)">
+    <!-- 方框等高线 -->
+    <rect x="-200" y="-200" width="400" height="400" rx="20" fill="none" stroke="#14F195" stroke-width="1.5" opacity="0.3"
+          stroke-dasharray="380 20"/>
+    <rect x="-185" y="-185" width="370" height="370" rx="18" fill="none" stroke="#14F195" stroke-width="2" opacity="0.35"
+          stroke-dasharray="355 20"/>
+    <rect x="-170" y="-170" width="340" height="340" rx="17" fill="none" stroke="#14F195" stroke-width="2.5" opacity="0.45"
+          stroke-dasharray="325 20"/>
+    <rect x="-155" y="-155" width="310" height="310" rx="16" fill="none" stroke="#14F195" stroke-width="3.5" opacity="0.6"/>
+    <!-- 右上角缺口弧 -->
+    <path d="M 140,-155 Q 155,-155 155,-140" fill="none" stroke="#14F195" stroke-width="3.5" opacity="0.6"/>
+    <circle cx="155" cy="-148" r="4" fill="#14F195" opacity="0.15" filter="url(#sg)"/>
+    
+    <!-- 大圆虚线 -->
+    <circle cx="0" cy="0" r="112" fill="none" stroke="#14F195" stroke-width="4" stroke-dasharray="14 8" opacity="0.6"/>
+    <!-- 内圆虚线 -->
+    <circle cx="-25" cy="0" r="62" fill="none" stroke="#14F195" stroke-width="3.5" stroke-dasharray="14 8" opacity="0.6"/>
+    <!-- 粒子 -->
+    <g fill="#14F195" opacity="0.4">
+      <circle cx="0" cy="-38" r="1.5"/><circle cx="14" cy="-35" r="1.3"/><circle cx="25" cy="-28" r="1.6"/>
+      <circle cx="33" cy="-18" r="1.4"/><circle cx="37" cy="-5" r="1.5"/><circle cx="36" cy="8" r="1.3"/>
+      <circle cx="31" cy="20" r="1.6"/><circle cx="22" cy="30" r="1.4"/><circle cx="10" cy="36" r="1.5"/>
+      <circle cx="-3" cy="38" r="1.3"/><circle cx="-16" cy="35" r="1.6"/><circle cx="-27" cy="28" r="1.4"/>
+      <circle cx="-34" cy="17" r="1.5"/><circle cx="-37" cy="4" r="1.3"/><circle cx="-35" cy="-9" r="1.6"/>
+      <circle cx="-28" cy="-21" r="1.4"/><circle cx="-18" cy="-31" r="1.5"/><circle cx="-5" cy="-37" r="1.3"/>
+    </g>
+    <g fill="#14F195" opacity="0.55">
+      <circle cx="0" cy="-25" r="1.8"/><circle cx="10" cy="-23" r="1.6"/><circle cx="18" cy="-17" r="1.8"/>
+      <circle cx="23" cy="-8" r="1.5"/><circle cx="25" cy="2" r="1.8"/><circle cx="22" cy="12" r="1.6"/>
+      <circle cx="16" cy="20" r="1.8"/><circle cx="7" cy="24" r="1.5"/><circle cx="-3" cy="25" r="1.8"/>
+      <circle cx="-13" cy="22" r="1.6"/><circle cx="-20" cy="15" r="1.8"/><circle cx="-24" cy="5" r="1.5"/>
+      <circle cx="-23" cy="-6" r="1.8"/><circle cx="-18" cy="-15" r="1.6"/><circle cx="-10" cy="-22" r="1.8"/>
+    </g>
+    <g fill="#14F195" opacity="0.7">
+      <circle cx="0" cy="-14" r="2"/><circle cx="8" cy="-11" r="1.8"/><circle cx="12" cy="-5" r="2"/>
+      <circle cx="11" cy="3" r="1.8"/><circle cx="6" cy="10" r="2"/><circle cx="-1" cy="13" r="1.8"/>
+      <circle cx="-8" cy="10" r="2"/><circle cx="-12" cy="3" r="1.8"/><circle cx="-10" cy="-5" r="2"/>
+      <circle cx="-5" cy="-11" r="1.8"/>
+    </g>
+  </g>
+  
+  <!-- ========== WHITE/GREY CENTER (主层) ========== -->
+  <g transform="translate(400, 355)" filter="url(#glow)">
+    <!-- 方框等高线 -->
+    <rect x="-200" y="-200" width="400" height="400" rx="20" fill="none" stroke="#666" stroke-width="1.8" opacity="0.3"
+          stroke-dasharray="380 20"/>
+    <rect x="-185" y="-185" width="370" height="370" rx="18" fill="none" stroke="#777" stroke-width="2.5" opacity="0.4"
+          stroke-dasharray="355 20"/>
+    <rect x="-170" y="-170" width="340" height="340" rx="17" fill="none" stroke="#888" stroke-width="3" opacity="0.5"
+          stroke-dasharray="325 20"/>
+    <rect x="-155" y="-155" width="310" height="310" rx="16" fill="none" stroke="#ccc" stroke-width="5" opacity="0.7"/>
+    <!-- 右上角缺口弧 — unwrap -->
+    <path d="M 140,-155 Q 155,-155 155,-140" fill="none" stroke="#eee" stroke-width="5" opacity="0.7"/>
+    <!-- 缺口处散发的光 -->
+    <circle cx="158" cy="-148" r="8" fill="#ffffff" opacity="0.04" filter="url(#solGlow)"/>
+    <circle cx="163" cy="-143" r="4" fill="#ffffff" opacity="0.06" filter="url(#glow)"/>
+    
+    <!-- 大圆虚线 -->
+    <circle cx="0" cy="0" r="112" fill="none" stroke="#eee" stroke-width="5.5" stroke-dasharray="14 8" opacity="0.75"/>
+    <!-- 内圆虚线 -->
+    <circle cx="-25" cy="0" r="62" fill="none" stroke="#ddd" stroke-width="4.5" stroke-dasharray="14 8" opacity="0.7"/>
+    
+    <!-- 粒子瞳孔 -->
+    <g fill="#ffffff" opacity="0.3">
+      <circle cx="0" cy="-38" r="1.5"/><circle cx="14" cy="-35" r="1.3"/><circle cx="25" cy="-28" r="1.6"/>
+      <circle cx="33" cy="-18" r="1.4"/><circle cx="37" cy="-5" r="1.5"/><circle cx="36" cy="8" r="1.3"/>
+      <circle cx="31" cy="20" r="1.6"/><circle cx="22" cy="30" r="1.4"/><circle cx="10" cy="36" r="1.5"/>
+      <circle cx="-3" cy="38" r="1.3"/><circle cx="-16" cy="35" r="1.6"/><circle cx="-27" cy="28" r="1.4"/>
+      <circle cx="-34" cy="17" r="1.5"/><circle cx="-37" cy="4" r="1.3"/><circle cx="-35" cy="-9" r="1.6"/>
+      <circle cx="-28" cy="-21" r="1.4"/><circle cx="-18" cy="-31" r="1.5"/><circle cx="-5" cy="-37" r="1.3"/>
+    </g>
+    <g fill="#ffffff" opacity="0.5">
+      <circle cx="0" cy="-25" r="1.8"/><circle cx="10" cy="-23" r="1.6"/><circle cx="18" cy="-17" r="1.8"/>
+      <circle cx="23" cy="-8" r="1.5"/><circle cx="25" cy="2" r="1.8"/><circle cx="22" cy="12" r="1.6"/>
+      <circle cx="16" cy="20" r="1.8"/><circle cx="7" cy="24" r="1.5"/><circle cx="-3" cy="25" r="1.8"/>
+      <circle cx="-13" cy="22" r="1.6"/><circle cx="-20" cy="15" r="1.8"/><circle cx="-24" cy="5" r="1.5"/>
+      <circle cx="-23" cy="-6" r="1.8"/><circle cx="-18" cy="-15" r="1.6"/><circle cx="-10" cy="-22" r="1.8"/>
+    </g>
+    <g fill="#ffffff" opacity="0.7">
+      <circle cx="0" cy="-14" r="2.2"/><circle cx="8" cy="-11" r="2"/><circle cx="12" cy="-5" r="2.2"/>
+      <circle cx="11" cy="3" r="2"/><circle cx="6" cy="10" r="2.2"/><circle cx="-1" cy="13" r="2"/>
+      <circle cx="-8" cy="10" r="2.2"/><circle cx="-12" cy="3" r="2"/><circle cx="-10" cy="-5" r="2.2"/>
+      <circle cx="-5" cy="-11" r="2"/>
+    </g>
+    <!-- 核心瞳孔 -->
+    <circle cx="0" cy="0" r="8" fill="#ffffff" opacity="0.85"/>
+    <circle cx="0" cy="0" r="3.5" fill="#ffffff" opacity="0.98"/>
+    <circle cx="-2" cy="-3" r="1.8" fill="#ffffff" opacity="0.55"/>
+  </g>
+  
+  <!-- ========== Glitch切片 ========== -->
+  <g opacity="0.2">
+    <rect x="160" y="320" width="200" height="4" fill="#9945FF" opacity="0.5"/>
+    <rect x="440" y="320" width="180" height="4" fill="#14F195" opacity="0.4"/>
+    <rect x="250" y="420" width="150" height="3" fill="#9945FF" opacity="0.4"/>
+    <rect x="420" y="390" width="200" height="4" fill="#14F195" opacity="0.5"/>
+    <rect x="500" y="460" width="120" height="3" fill="#9945FF" opacity="0.3"/>
+    <rect x="300" y="480" width="140" height="2" fill="#14F195" opacity="0.3"/>
+    <rect x="180" y="270" width="100" height="2" fill="#9945FF" opacity="0.25"/>
+    <rect x="520" y="340" width="100" height="2" fill="#14F195" opacity="0.25"/>
+    <rect x="300" y="240" width="200" height="2" fill="#ffffff" opacity="0.06"/>
+    <rect x="250" y="500" width="300" height="2" fill="#ffffff" opacity="0.05"/>
+  </g>
+  
+  <!-- ========== 扫描线 ========== -->
+  <g opacity="0.04" stroke="#ffffff" stroke-width="0.8">
+    <line x1="0" y1="80" x2="800" y2="80"/>
+    <line x1="0" y1="140" x2="800" y2="140"/>
+    <line x1="0" y1="200" x2="800" y2="200"/>
+    <line x1="0" y1="260" x2="800" y2="260"/>
+    <line x1="0" y1="320" x2="800" y2="320"/>
+    <line x1="0" y1="380" x2="800" y2="380"/>
+    <line x1="0" y1="440" x2="800" y2="440"/>
+    <line x1="0" y1="500" x2="800" y2="500"/>
+    <line x1="0" y1="560" x2="800" y2="560"/>
+    <line x1="0" y1="620" x2="800" y2="620"/>
+    <line x1="0" y1="680" x2="800" y2="680"/>
+    <line x1="0" y1="740" x2="800" y2="740"/>
+  </g>
+  <rect x="0" y="375" width="800" height="8" fill="#ffffff" opacity="0.025" filter="url(#glow)"/>
+  <line x1="0" y1="379" x2="800" y2="379" stroke="#ffffff" stroke-width="1.5" opacity="0.06"/>
+  
+  <!-- ========== Typography ========== -->
+  <text x="400" y="615" text-anchor="middle" 
+        font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" 
+        font-size="48" font-weight="200" fill="#e0e0e0" letter-spacing="16" opacity="0.8">SolWrapped</text>
+  <text x="400" y="645" text-anchor="middle" 
+        font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" 
+        font-size="14" fill="#666" letter-spacing="6" opacity="0.5">YOUR WALLET TELLS A STORY</text>
+</svg>

@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AIReport, WalletProfile, Badge } from "@/lib/types";
-import type { Theme } from "@/lib/themes";
 import { formatFee } from "./ReportAtoms";
 
 type CardTab = "ai" | "standard";
@@ -15,7 +14,6 @@ interface ShareModalProps {
   ai: AIReport;
   profile: WalletProfile;
   badges: Badge[];
-  theme: Theme;
 }
 
 export function ShareModal({

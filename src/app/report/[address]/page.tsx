@@ -259,7 +259,6 @@ export default function ReportPage() {
             ai={ai}
             profile={p}
             badges={badges}
-            theme={theme}
           />
 
           <motion.div

@@ -4,24 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Logo } from "@/components/Logo";
-
-// Base58 charset used by Solana addresses (excludes 0, O, I, l to avoid lookalikes)
-const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]+$/;
-
-function validateAddress(raw: string): { ok: true } | { ok: false; reason: string } {
-  const trimmed = raw.trim();
-  if (!trimmed) return { ok: false, reason: "EMPTY ADDRESS" };
-  if (trimmed.startsWith("demo-") || trimmed.toLowerCase() === "demo") {
-    return { ok: true };
-  }
-  if (trimmed.length < 32 || trimmed.length > 44) {
-    return { ok: false, reason: "INVALID LENGTH (32-44 CHARS)" };
-  }
-  if (!BASE58_RE.test(trimmed)) {
-    return { ok: false, reason: "INVALID CHARS (BASE58 ONLY)" };
-  }
-  return { ok: true };
-}
+import { validateAddress } from "@/lib/address";
 
 export default function Home() {
   const [address, setAddress] = useState("");
@@ -38,7 +21,7 @@ export default function Home() {
       return;
     }
     setError("");
-    router.push(`/report/${address.trim()}`);
+    router.push(`/report/${check.address}`);
   };
 
   const handleDemoSelect = (value: string) => {

@@ -5,6 +5,7 @@ import { generateAIReport } from '@/lib/ai';
 import { getCachedReport, setCachedReport } from '@/lib/cache';
 import { getDemoReport } from '@/lib/demo-data';
 import { computeBadges } from '@/lib/badges';
+import { validateAddress } from '@/lib/address';
 import type { FullReport, AnalyzeResponse } from '@/lib/types';
 
 export async function GET(
@@ -25,9 +26,10 @@ export async function GET(
     } satisfies AnalyzeResponse);
   }
 
-  if (!address || address.length < 32) {
+  const check = validateAddress(address);
+  if (!check.ok) {
     return NextResponse.json(
-      { status: 'error', error: 'Invalid Solana address' } satisfies AnalyzeResponse,
+      { status: 'error', error: check.reason } satisfies AnalyzeResponse,
       { status: 400 }
     );
   }

@@ -85,6 +85,3 @@ export function getThemeForPersonality(personality: string): Theme {
 export function getThemeById(id: string): Theme {
   return themes[id] || themes.violet;
 }
-
-export const allThemes = themes;
-export const defaultTheme = themes.violet;
