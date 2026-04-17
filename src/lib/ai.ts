@@ -1,5 +1,6 @@
 import type { WalletProfile, AIReport } from './types';
 import { getThemeForPersonality } from './themes';
+import { generateText } from './llm';
 
 const FALLBACK_REPORT: AIReport = {
   personality: 'Solana Explorer',
@@ -15,14 +16,9 @@ const FALLBACK_REPORT: AIReport = {
     'Keep exploring new protocols and consider setting up DCA strategies for consistent growth.',
 };
 
-export async function generateAIReport(
-  profile: WalletProfile,
-  apiKey: string
-): Promise<AIReport> {
-  if (!apiKey) {
-    return FALLBACK_REPORT;
-  }
+const VALID_THEMES = ['cyan', 'orange', 'green', 'violet', 'pink', 'gold'];
 
+export async function generateAIReport(profile: WalletProfile): Promise<AIReport> {
   const dataSummary = {
     totalTxs: profile.totalTransactions,
     activeDays: profile.activeDays,
@@ -71,48 +67,29 @@ Rules:
 
   const userPrompt = `Analyze this Solana wallet:\n${JSON.stringify(dataSummary, null, 2)}`;
 
+  const text = await generateText({
+    system: systemPrompt,
+    user: userPrompt,
+    maxTokens: 512,
+    temperature: 0.7,
+  });
+
+  if (!text) return FALLBACK_REPORT;
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) return FALLBACK_REPORT;
+
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6-20250514',
-        max_tokens: 512,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
-      }),
-    });
-
-    if (!res.ok) {
-      console.error('Claude API error:', res.status, await res.text());
-      return FALLBACK_REPORT;
-    }
-
-    const data = await res.json();
-    const text = data.content?.[0]?.text;
-    if (!text) return FALLBACK_REPORT;
-
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return FALLBACK_REPORT;
-
     const parsed = JSON.parse(jsonMatch[0]) as AIReport;
     if (!parsed.personality || !parsed.insights || parsed.insights.length < 1) {
       return FALLBACK_REPORT;
     }
-
-    // Ensure themeId is valid, fall back to personality-based matching
-    const validThemes = ['cyan', 'orange', 'green', 'violet', 'pink', 'gold'];
-    if (!parsed.themeId || !validThemes.includes(parsed.themeId)) {
+    if (!parsed.themeId || !VALID_THEMES.includes(parsed.themeId)) {
       parsed.themeId = getThemeForPersonality(parsed.personality).id;
     }
-
     return parsed;
   } catch (err) {
-    console.error('AI generation failed:', err);
+    console.error('[ai] JSON parse failed:', err);
     return FALLBACK_REPORT;
   }
 }

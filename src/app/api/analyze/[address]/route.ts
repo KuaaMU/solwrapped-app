@@ -49,8 +49,6 @@ export async function GET(
     );
   }
 
-  const claudeKey = process.env.ANTHROPIC_API_KEY || '';
-
   try {
     const mode = request.nextUrl.searchParams.get('mode') || 'full';
 
@@ -73,8 +71,8 @@ export async function GET(
     // Analyze
     const profile = analyzeTransactions(address, transactions);
 
-    // Generate AI report
-    const ai = await generateAIReport(profile, claudeKey);
+    // Generate AI report (provider auto-resolved from env; falls back to template)
+    const ai = await generateAIReport(profile);
 
     const report: FullReport = {
       profile,
