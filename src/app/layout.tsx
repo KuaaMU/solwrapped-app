@@ -8,18 +8,26 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SolWrapped — Your On-Chain Identity",
+  title: "SolWrapped — Your Wallet Tells A Story",
   description:
-    "AI scans your Solana wallet. Discovers your personality. Builds your card. Share it.",
+    "AI scans your Solana wallet. Reveals your on-chain personality. Generates a data-driven card.",
+  icons: {
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-64.png", sizes: "64x64", type: "image/png" },
+      { url: "/favicon-256.png", sizes: "256x256", type: "image/png" },
+      { url: "/assets/logo-mark.svg", type: "image/svg+xml" },
+    ],
+  },
   openGraph: {
-    title: "SolWrapped — Your On-Chain Identity",
-    description: "AI scans your Solana wallet and reveals your on-chain personality.",
+    title: "SolWrapped — Your Wallet Tells A Story",
+    description: "AI reveals your on-chain personality. Built for Colosseum Frontier 2026.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "SolWrapped",
-    description: "Reveal your Solana personality in 30 seconds.",
+    description: "Reveal your Solana personality.",
   },
 };
 

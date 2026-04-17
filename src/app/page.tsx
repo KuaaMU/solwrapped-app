@@ -1,20 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Logo } from "@/components/Logo";
 
 export default function Home() {
   const [address, setAddress] = useState("");
   const [error, setError] = useState("");
+  const [focused, setFocused] = useState(false);
   const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleAnalyze = () => {
     const trimmed = address.trim();
     if (!trimmed) {
       setError("EMPTY ADDRESS");
+      inputRef.current?.focus();
       return;
     }
-    // Allow demo addresses and real Solana addresses (32+ chars)
     const isDemo = trimmed.startsWith("demo-") || trimmed.toLowerCase() === "demo";
     if (!isDemo && trimmed.length < 32) {
       setError("INVALID ADDRESS");
@@ -24,133 +28,212 @@ export default function Home() {
     router.push(`/report/${trimmed}`);
   };
 
+  const handleDemoSelect = (value: string) => {
+    setAddress(value);
+    setError("");
+    inputRef.current?.focus();
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center noise scan-grid min-h-screen relative">
-      {/* Scan line effect */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="scanline absolute left-0 right-0 h-px bg-[var(--accent)] opacity-20" />
-      </div>
+    <div className="flex flex-col flex-1 min-h-screen relative overflow-hidden ambient-glow scanlines">
+      <div className="scan-bar" aria-hidden="true" />
 
-      <main className="flex flex-col items-start gap-10 px-6 py-20 max-w-xl w-full z-10">
-        {/* ASCII hero */}
-        <pre
-          className="text-[var(--accent)] text-[10px] leading-tight opacity-60 select-none hidden md:block"
-          aria-hidden="true"
-        >{`
-  ╔═══════════════════════════════════════╗
-  ║  ███████╗ ██████╗ ██╗     ██╗    ██╗ ║
-  ║  ██╔════╝██╔═══██╗██║     ██║    ██║ ║
-  ║  ███████╗██║   ██║██║     ██║ █╗ ██║ ║
-  ║  ╚════██║██║   ██║██║     ██║███╗██║ ║
-  ║  ███████║╚██████╔╝███████╗╚███╔███╔╝ ║
-  ║  ╚══════╝ ╚═════╝ ╚══════╝ ╚══╝╚══╝ ║
-  ╚═══════════════════════════════════════╝`}
-        </pre>
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-16 z-10">
+        <div className="max-w-xl w-full flex flex-col items-center gap-10">
 
-        {/* Header block */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <span className="tag tag-accent">SOLANA</span>
+          {/* Tags row */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex items-center gap-3"
+          >
+            <span className="tag tag-purple">SOLANA</span>
             <span className="tag">FRONTIER 2026</span>
-          </div>
+          </motion.div>
 
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-[0.9] mt-4">
-            SOL
-            <br />
-            <span style={{ color: "var(--accent)" }}>WRAPPED</span>
-          </h1>
-
-          <p className="text-[var(--text-dim)] text-sm mt-2 max-w-sm leading-relaxed font-mono">
-            Your wallet tells a story. AI reads the chain,
-            <br />
-            finds your personality, builds your card.
-          </p>
-        </div>
-
-        {/* Input block */}
-        <div className="w-full flex flex-col gap-3">
-          <label className="mono-label">WALLET ADDRESS</label>
-          <div className="flex gap-0">
-            <input
-              type="text"
-              value={address}
-              onChange={(e) => {
-                setAddress(e.target.value);
-                setError("");
-              }}
-              onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
-              placeholder="Paste your Solana address..."
-              spellCheck={false}
-              className="flex-1 bg-[var(--bg-card)] border border-[var(--border)] border-r-0 px-4 py-3 text-[var(--text)] placeholder-[var(--text-dim)] outline-none font-mono text-sm focus:border-[var(--accent)] transition-colors"
+          {/* Logo hero — static brand version with mouse interactivity */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <Logo
+              size={280}
+              pulse
+              interactive
+              className="select-none"
             />
-            <button
-              onClick={handleAnalyze}
-              disabled={!address.trim()}
-              className="btn-accent whitespace-nowrap"
-            >
-              SCAN →
-            </button>
-          </div>
+          </motion.div>
 
-          {error && (
-            <p className="text-[var(--danger)] text-xs font-mono">{`> ERR: ${error}`}</p>
-          )}
-        </div>
+          {/* Brand typography */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex flex-col items-center gap-3 -mt-4"
+          >
+            <h1 className="h-display-xl" style={{ letterSpacing: "0.3em" }}>
+              SolWrapped
+            </h1>
+            <p className="h-tagline">YOUR WALLET TELLS A STORY</p>
+          </motion.div>
 
-        {/* Feature chips */}
-        <div className="flex flex-col gap-4 w-full">
+          {/* Input block with world-line convergence rings */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="w-full flex flex-col gap-3 mt-2 relative"
+          >
+            <label className="mono-label text-center">ENTER YOUR WALLET TO BEGIN</label>
+
+            <div className="relative">
+              {/* Convergence rings — visible when input focused, pulsing inward */}
+              <AnimatePresence>
+                {focused && (
+                  <>
+                    {[0, 1, 2].map((i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute rounded-md pointer-events-none"
+                        style={{
+                          border: `1.5px dashed rgba(153, 69, 255, ${0.5 - i * 0.15})`,
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                        }}
+                        initial={{ scale: 1 + (i + 1) * 0.15, opacity: 0 }}
+                        animate={{
+                          scale: [1 + (i + 1) * 0.15, 1],
+                          opacity: [0, 0.6 - i * 0.1, 0],
+                        }}
+                        exit={{ opacity: 0, scale: 1 + (i + 1) * 0.15 }}
+                        transition={{
+                          duration: 2,
+                          delay: i * 0.3,
+                          repeat: Infinity,
+                          ease: "easeOut",
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
+              </AnimatePresence>
+
+              <div className="flex flex-col sm:flex-row gap-2 relative z-10">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={address}
+                  onChange={(e) => {
+                    setAddress(e.target.value);
+                    setError("");
+                  }}
+                  onFocus={() => setFocused(true)}
+                  onBlur={() => setFocused(false)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
+                  placeholder="Solana address or demo-*"
+                  spellCheck={false}
+                  className="input flex-1"
+                />
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={handleAnalyze}
+                  disabled={!address.trim()}
+                  className="btn btn-primary whitespace-nowrap"
+                >
+                  UNWRAP
+                </motion.button>
+              </div>
+            </div>
+
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  className="text-[var(--danger)] text-xs font-mono text-center tracking-widest mt-1"
+                >
+                  {`> ERR · ${error}`}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
           <div className="divider" />
-          <div className="grid grid-cols-3 gap-4">
-            <FeatureBlock num="01" label="PERSONALITY" desc="AI-generated archetype from your tx patterns" />
-            <FeatureBlock num="02" label="INSIGHTS" desc="Hidden losses, missed airdrops, protocol stats" />
-            <FeatureBlock num="03" label="SHARE" desc="Export card to Twitter. Flex your on-chain identity" />
-          </div>
-        </div>
 
-        {/* Demo links */}
-        <div className="flex flex-col gap-2 w-full">
+          {/* Demo pills */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="flex flex-col items-center gap-3 w-full"
+          >
+            <span className="mono-label">TRY A DEMO WALLET</span>
+            <div className="flex flex-wrap gap-2 justify-center">
+              <DemoPill label="MIDNIGHT DEGEN" onClick={() => handleDemoSelect("demo-degen")} />
+              <DemoPill label="YIELD MONK" onClick={() => handleDemoSelect("demo-farmer")} />
+              <DemoPill label="PIXEL HUNTER" onClick={() => handleDemoSelect("demo-collector")} />
+            </div>
+          </motion.div>
+
           <div className="divider" />
-          <div className="mono-label">DEMO WALLETS</div>
-          <div className="flex gap-2">
-            <button onClick={() => { setAddress("demo-degen"); }} className="tag tag-accent cursor-pointer hover:opacity-80">
-              DEGEN
-            </button>
-            <button onClick={() => { setAddress("demo-farmer"); }} className="tag cursor-pointer hover:opacity-80">
-              YIELD FARMER
-            </button>
-            <button onClick={() => { setAddress("demo-collector"); }} className="tag cursor-pointer hover:opacity-80">
-              NFT COLLECTOR
-            </button>
-          </div>
-        </div>
 
-        {/* Footer */}
-        <div className="flex items-center gap-4 text-[var(--text-dim)] text-[10px] font-mono uppercase tracking-widest">
-          <span>Colosseum Frontier 2026</span>
-          <span>·</span>
-          <span>Helius</span>
-          <span>·</span>
-          <span>Claude</span>
+          {/* Three features */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="grid grid-cols-3 gap-6 w-full"
+          >
+            <Feature num="01" label="PERSONALITY" desc="AI archetype from tx patterns" />
+            <Feature num="02" label="INSIGHTS" desc="Hidden fees · missed alpha" />
+            <Feature num="03" label="CARD" desc="Data-driven share artifact" />
+          </motion.div>
+
+          {/* Footer */}
+          <div className="flex items-center gap-3 text-[var(--text-disabled)] text-[10px] font-mono uppercase tracking-[0.3em] pt-4">
+            <span>COLOSSEUM FRONTIER 2026</span>
+            <span>·</span>
+            <span>HELIUS</span>
+            <span>·</span>
+            <span>CLAUDE</span>
+          </div>
         </div>
       </main>
     </div>
   );
 }
 
-function FeatureBlock({
-  num,
-  label,
-  desc,
-}: {
-  num: string;
-  label: string;
-  desc: string;
-}) {
+function DemoPill({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-[var(--accent)] font-mono text-xs">{num}</span>
-      <span className="text-[var(--text)] font-bold text-xs tracking-wider">{label}</span>
-      <span className="text-[var(--text-dim)] text-[10px] leading-relaxed">{desc}</span>
+    <motion.button
+      whileHover={{ scale: 1.04 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={onClick}
+      className="tag hover:border-[var(--sol-purple)] hover:text-[var(--sol-purple)] hover:bg-[var(--sol-purple-faint)] hover:shadow-[0_0_14px_rgba(153,69,255,0.3)] transition-all cursor-pointer active:shadow-[0_0_20px_rgba(153,69,255,0.5)]"
+    >
+      {label}
+    </motion.button>
+  );
+}
+
+function Feature({ num, label, desc }: { num: string; label: string; desc: string }) {
+  return (
+    <div className="flex flex-col gap-1.5 items-center text-center">
+      <span className="font-mono text-[11px] text-[var(--sol-purple)] tracking-[0.3em] font-medium">
+        {num}
+      </span>
+      <span className="h-display text-[12px] tracking-[0.25em] text-[var(--text)] font-medium">
+        {label}
+      </span>
+      <span className="text-[var(--text-tertiary)] text-[11px] leading-relaxed">
+        {desc}
+      </span>
     </div>
   );
 }

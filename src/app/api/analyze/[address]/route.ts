@@ -4,6 +4,7 @@ import { analyzeTransactions } from '@/lib/analyzer';
 import { generateAIReport } from '@/lib/ai';
 import { getCachedReport, setCachedReport } from '@/lib/cache';
 import { getDemoReport } from '@/lib/demo-data';
+import { computeBadges } from '@/lib/badges';
 import type { FullReport, AnalyzeResponse } from '@/lib/types';
 
 export async function GET(
@@ -78,6 +79,7 @@ export async function GET(
     const report: FullReport = {
       profile,
       ai,
+      badges: computeBadges(profile),
       generatedAt: Date.now(),
       version: '1.0.0',
     };

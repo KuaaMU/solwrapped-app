@@ -1,90 +1,75 @@
-// Theme system for SolWrapped personality-based visual theming
+// SolWrapped theme system
+// Per DESIGN-SPEC.md: unified dark base + subtle personality accent tint
+// Primary visual identity = logo + Solana purple/teal
+// Theme colors here act as MINOR personality flavor, not dominant color
 
 export interface Theme {
   id: string;
   name: string;
-  primary: string;       // main accent color
-  secondary: string;     // supporting color
-  bg: string;            // background tint (used for gradients)
-  glow: string;          // glow/bloom color (rgba)
-  primaryDim: string;    // low-opacity primary
-  barColors: {
-    swap: string;
-    transfer: string;
-    nft: string;
-    stake: string;
-  };
+  archetype: string;
+  accent: string;          // subtle personality tint (15% opacity effective use)
+  accentFaint: string;     // 10-15% opacity for backgrounds
+  accentGlow: string;      // 15-20% opacity for glows
+  // Data-driven logo gets a hint of this color mixed with purple/teal base
 }
 
 const themes: Record<string, Theme> = {
   cyan: {
     id: 'cyan',
     name: 'Terminal',
-    primary: '#22d3ee',
-    secondary: '#06b6d4',
-    bg: '#041f26',
-    glow: 'rgba(34, 211, 238, 0.25)',
-    primaryDim: 'rgba(34, 211, 238, 0.15)',
-    barColors: { swap: '#22d3ee', transfer: '#f97316', nft: '#a78bfa', stake: '#22c55e' },
+    archetype: 'DIAMOND HANDS',
+    accent: '#22d3ee',
+    accentFaint: 'rgba(34, 211, 238, 0.1)',
+    accentGlow: 'rgba(34, 211, 238, 0.15)',
   },
   orange: {
     id: 'orange',
     name: 'Degen',
-    primary: '#f97316',
-    secondary: '#fb923c',
-    bg: '#261304',
-    glow: 'rgba(249, 115, 22, 0.25)',
-    primaryDim: 'rgba(249, 115, 22, 0.15)',
-    barColors: { swap: '#f97316', transfer: '#22d3ee', nft: '#a78bfa', stake: '#22c55e' },
+    archetype: 'MIDNIGHT DEGEN',
+    accent: '#f97316',
+    accentFaint: 'rgba(249, 115, 22, 0.1)',
+    accentGlow: 'rgba(249, 115, 22, 0.15)',
   },
   green: {
     id: 'green',
     name: 'Matrix',
-    primary: '#22c55e',
-    secondary: '#4ade80',
-    bg: '#042610',
-    glow: 'rgba(34, 197, 94, 0.25)',
-    primaryDim: 'rgba(34, 197, 94, 0.15)',
-    barColors: { swap: '#22c55e', transfer: '#f97316', nft: '#a78bfa', stake: '#22d3ee' },
+    archetype: 'ALPHA SNIPER',
+    accent: '#14F195', // aligns with Solana teal
+    accentFaint: 'rgba(20, 241, 149, 0.1)',
+    accentGlow: 'rgba(20, 241, 149, 0.15)',
   },
   violet: {
     id: 'violet',
     name: 'Phantom',
-    primary: '#a78bfa',
-    secondary: '#c4b5fd',
-    bg: '#1a0e2e',
-    glow: 'rgba(167, 139, 250, 0.25)',
-    primaryDim: 'rgba(167, 139, 250, 0.15)',
-    barColors: { swap: '#a78bfa', transfer: '#f97316', nft: '#22d3ee', stake: '#22c55e' },
+    archetype: 'PIXEL HUNTER',
+    accent: '#9945FF', // aligns with Solana purple
+    accentFaint: 'rgba(153, 69, 255, 0.1)',
+    accentGlow: 'rgba(153, 69, 255, 0.15)',
   },
   pink: {
     id: 'pink',
     name: 'Neon',
-    primary: '#ec4899',
-    secondary: '#f472b6',
-    bg: '#2e0a1e',
-    glow: 'rgba(236, 72, 153, 0.25)',
-    primaryDim: 'rgba(236, 72, 153, 0.15)',
-    barColors: { swap: '#ec4899', transfer: '#f97316', nft: '#a78bfa', stake: '#22c55e' },
+    archetype: 'FRESH EXPLORER',
+    accent: '#ec4899',
+    accentFaint: 'rgba(236, 72, 153, 0.1)',
+    accentGlow: 'rgba(236, 72, 153, 0.15)',
   },
   gold: {
     id: 'gold',
     name: 'Yield',
-    primary: '#eab308',
-    secondary: '#facc15',
-    bg: '#261e04',
-    glow: 'rgba(234, 179, 8, 0.25)',
-    primaryDim: 'rgba(234, 179, 8, 0.15)',
-    barColors: { swap: '#eab308', transfer: '#f97316', nft: '#a78bfa', stake: '#22c55e' },
+    archetype: 'YIELD MONK',
+    accent: '#eab308',
+    accentFaint: 'rgba(234, 179, 8, 0.1)',
+    accentGlow: 'rgba(234, 179, 8, 0.15)',
   },
 };
 
-// Map personality keywords to theme IDs
+// Regex patterns — kept from previous iteration, routing personality → theme
 const PERSONALITY_THEME_MAP: [RegExp, string][] = [
   [/degen|ape|gambl|midnight|yolo|maxi/i, 'orange'],
   [/yield|farm|monk|stake|patient|disciplin/i, 'gold'],
   [/nft|art|collect|pixel|hunter|creator/i, 'violet'],
-  [/whale|og|veteran|legend|alpha/i, 'green'],
+  [/whale|og|veteran|legend|alpha|sniper|matrix/i, 'green'],
   [/newb|fresh|explore|curious|baby/i, 'pink'],
   [/diamond|hodl|holder|conviction/i, 'cyan'],
 ];
@@ -92,16 +77,14 @@ const PERSONALITY_THEME_MAP: [RegExp, string][] = [
 export function getThemeForPersonality(personality: string): Theme {
   const lower = personality.toLowerCase();
   for (const [pattern, themeId] of PERSONALITY_THEME_MAP) {
-    if (pattern.test(lower)) {
-      return themes[themeId];
-    }
+    if (pattern.test(lower)) return themes[themeId];
   }
-  return themes.cyan; // default
+  return themes.violet; // default → Solana purple
 }
 
 export function getThemeById(id: string): Theme {
-  return themes[id] || themes.cyan;
+  return themes[id] || themes.violet;
 }
 
 export const allThemes = themes;
-export const defaultTheme = themes.cyan;
+export const defaultTheme = themes.violet;

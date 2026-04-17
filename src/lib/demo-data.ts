@@ -1,4 +1,5 @@
 import type { FullReport, WalletProfile, AIReport } from './types';
+import { computeBadges } from './badges';
 
 // Demo wallet reports for development and hackathon demo
 // These bypass the API and load instantly
@@ -171,6 +172,7 @@ export function getDemoReport(address: string): FullReport | null {
   return {
     profile,
     ai: demo.ai,
+    badges: computeBadges(profile),
     generatedAt: Date.now(),
     version: '1.0.0-demo',
   };

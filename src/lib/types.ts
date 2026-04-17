@@ -125,8 +125,19 @@ export interface AIReport {
 export interface FullReport {
   profile: WalletProfile;
   ai: AIReport;
+  badges: Badge[];
   generatedAt: number;
   version: string;
+}
+
+// Achievement badge — 3 rarity tiers per design spec
+export type BadgeRarity = 'bronze' | 'silver' | 'gold';
+
+export interface Badge {
+  id: string;
+  label: string;         // short uppercase, fits on card
+  rarity: BadgeRarity;
+  description: string;   // hover/long-form explanation
 }
 
 // API response types
