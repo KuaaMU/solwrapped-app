@@ -59,13 +59,17 @@ export function Logo({
     let tDriftX = 0, tDriftY = 0, cDriftX = 0, cDriftY = 0;
 
     const animate = () => {
-      const lerp = 0.14;
-      cIrisX += (tIrisX - cIrisX) * lerp;
-      cIrisY += (tIrisY - cIrisY) * lerp;
-      cPupilX += (tPupilX - cPupilX) * lerp;
-      cPupilY += (tPupilY - cPupilY) * lerp;
-      cDriftX += (tDriftX - cDriftX) * lerp;
-      cDriftY += (tDriftY - cDriftY) * lerp;
+      // Snappier lerp for pupil, gentler for iris, so the pupil feels like the
+      // "eye" and the iris follows as a secondary layer.
+      const pupilLerp = 0.2;
+      const irisLerp = 0.12;
+      const driftLerp = 0.08;
+      cIrisX += (tIrisX - cIrisX) * irisLerp;
+      cIrisY += (tIrisY - cIrisY) * irisLerp;
+      cPupilX += (tPupilX - cPupilX) * pupilLerp;
+      cPupilY += (tPupilY - cPupilY) * pupilLerp;
+      cDriftX += (tDriftX - cDriftX) * driftLerp;
+      cDriftY += (tDriftY - cDriftY) * driftLerp;
 
       const irisT = `translate(${cIrisX.toFixed(1)} ${cIrisY.toFixed(1)})`;
       const pupilT = `translate(${cPupilX.toFixed(1)} ${cPupilY.toFixed(1)})`;
@@ -85,16 +89,17 @@ export function Logo({
       const mag = Math.min(Math.hypot(nx, ny), 1);
       const ang = Math.atan2(ny, nx);
 
-      // In SVG viewBox units (800×800). Iris moves ~0.4x of pupil.
-      const maxPupil = 32;
-      const maxIris = 13;
+      // In SVG viewBox units (800×800). Different amplitudes so pupil slides
+      // inside iris while iris drifts inside the outer frame.
+      const maxPupil = 34;   // pupil vs iris — biggest visible motion
+      const maxIris = 22;    // iris vs outer frame — secondary drift
       tPupilX = Math.cos(ang) * mag * maxPupil;
       tPupilY = Math.sin(ang) * mag * maxPupil;
       tIrisX = Math.cos(ang) * mag * maxIris;
       tIrisY = Math.sin(ang) * mag * maxIris;
 
-      // Subtle whole-logo drift for depth
-      const maxDrift = 4;
+      // Subtle whole-logo parallax
+      const maxDrift = 6;
       tDriftX = Math.cos(ang) * mag * maxDrift;
       tDriftY = Math.sin(ang) * mag * maxDrift;
     };
@@ -128,7 +133,6 @@ export function Logo({
       className={`${className} relative`}
       style={{
         ...sizeStyle,
-        transition: interactive ? "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)" : undefined,
         willChange: interactive ? "transform" : undefined,
       }}
       aria-label={profile ? `SolWrapped logo for ${profile.address.slice(0, 6)}...` : "SolWrapped logo"}

@@ -1,41 +1,67 @@
-// AI art brief generator — writes a short abstract-art prompt for fal.ai.
-// Uses the LLM abstraction; falls back to a seed template when no LLM is configured.
+// AI art brief generator. Composes an art prompt from two layers:
+//   (1) the wallet's personality archetype (always present)
+//   (2) a temporal enrichment (festival / solar term / season / anniversary)
+//
+// The enrichment's `intensity` decides how much it shapes the image:
+//   - primary: the enrichment IS the subject; archetype becomes a color modifier
+//   - accent:  archetype is the subject; enrichment overlays clearly on top
+//   - wash:    archetype is the subject; enrichment only tints the mood
+//
+// Falls back to a structured template when the LLM is unavailable, preserving
+// the same routing logic so the visual result still reflects the enrichment.
 
 import { generateText } from '../llm';
 import type { FullReport } from '../types';
+import {
+  buildTemporalContext,
+  resolveEnrichment,
+  type EnrichmentIntensity,
+  type EnrichmentMode,
+  type ResolvedEnrichment,
+  type ThemeId,
+} from './enrichments';
+import { defaultVariantIdx, getVariant, type Variant } from './variants';
 
-const SYSTEM_PROMPT = `You are an art director for a Solana wallet personality card.
+const BASE_NEGATIVE = 'no text, no typography, no logos, no watermarks, no faces, no figures';
+
+const SYSTEM_PROMPT = `You are an art director writing prompts for an abstract-art Solana wallet card.
 ALWAYS produce ABSTRACT art prompts — NO figures, faces, recognizable objects, text, or typography.
 Style anchors: generative art, Refik Anadol data sculptures, Ryoji Ikeda minimal code aesthetic,
 geometric abstraction, particle fields, flow fields, color fields.
 
-Core palette ALWAYS: dark void background (#050505 to #0a0a0a),
-Solana neon purple (#9945FF) and teal (#14F195) accents,
-plus the personality-specific hint color.
+The user's message has two layers: an ARCHETYPE (the wallet's personality) and an
+optional TEMPORAL CONTEXT (festival, solar term, season, anniversary).
 
-Composition: centered focal region with 40% negative space for text overlay below.
-No busy corners. Cinematic, gallery-ready, high contrast.
+Compose the prompt according to this ROUTING RULE based on the TEMPORAL INTENSITY:
+- "primary": TEMPORAL IMAGERY is the main subject of the piece. The archetype survives
+  only as a color/energy modifier (one clause). The final image must be clearly
+  recognizable as the temporal theme.
+- "accent":  Archetype is the main subject. TEMPORAL IMAGERY must appear as a visible
+  overlay/atmosphere — the viewer must be able to see that the piece is seasonally colored.
+- "wash":    Archetype is the subject. TEMPORAL IMAGERY only shifts the color temperature.
+- "none":    Archetype is the entire subject. Ignore any temporal context.
+
+Core palette always: dark void (#050505–#0a0a0a) with Solana purple (#9945FF) and
+teal (#14F195) accents, plus the archetype's hint color.
+
+Composition: centered focal region with 40% negative space below for text overlay.
+No busy corners. Cinematic, gallery-ready.
+
+Every TABOO item in the user message is absolute — do not depict it in any form.
 
 Output ONLY the prompt itself — 60 to 100 English words, no commentary, no headings.
-You MUST end the prompt with: "no text, no typography, no logos, no watermarks, no faces, no figures"`;
+You MUST end the prompt with the provided NEGATIVE BLOCK verbatim.`;
 
-// One flavor line per archetype. Used as both LLM few-shot seed and hardcoded fallback.
-const FLAVOR_SEEDS: Record<string, string> = {
-  orange:
-    'Chaotic orange plasma streaks through a dark void, fragmented geometric shards drifting at angles, high-energy noise field, neon purple and teal sparks bleeding through cracks, cinematic depth, generative particle storm',
-  gold:
-    'Serene gold liquid metal flowing in concentric ripples across a black void, zen minimalism, warm amber glow radiating from a single focal point, faint teal undertones, meditative composition, Ryoji Ikeda-inspired calm',
-  violet:
-    'Violet pixel fragments drifting through darkness, glitched geometric shards arranged as a gallery installation, Solana purple dominant, teal micro-accents, surreal abstract composition, Refik Anadol data sculpture aesthetic',
-  green:
-    'Neon green grid collapsing into a particle cloud over a black void, tactical radar rings, matrix-precision geometric flow, Solana teal dominant with purple edge-lighting, high-contrast precision',
-  pink:
-    'Pink and magenta nebula particles blooming outward in a cosmic aurora, optimistic abstract energy, soft gradient field over dark void, subtle purple and teal undertones, ethereal generative bloom',
-  cyan:
-    'Cyan crystalline refractions across a frozen geometric lattice, icy precision, glass-like clarity, deep black void background, teal dominant with cold purple highlights, minimal composition, gallery lighting',
+const COLOR_NOTE: Record<ThemeId, string> = {
+  orange: 'hot orange + purple/teal edges',
+  gold: 'warm amber + faint teal',
+  violet: 'Solana violet dominant with teal micro-accents',
+  green: 'neon teal-green with violet edges',
+  pink: 'rose magenta with violet and teal hints',
+  cyan: 'cold cyan with purple highlights',
 };
 
-const FLAVOR_BY_PERSONALITY: [RegExp, keyof typeof FLAVOR_SEEDS][] = [
+const FLAVOR_BY_PERSONALITY: [RegExp, ThemeId][] = [
   [/degen|midnight|ape|gambl|yolo/i, 'orange'],
   [/monk|yield|farm|stake/i, 'gold'],
   [/pixel|hunter|collect|nft|art/i, 'violet'],
@@ -44,50 +70,172 @@ const FLAVOR_BY_PERSONALITY: [RegExp, keyof typeof FLAVOR_SEEDS][] = [
   [/diamond|hand|hodl|conviction/i, 'cyan'],
 ];
 
-function seedFor(report: FullReport): string {
-  const themeId = report.ai.themeId;
-  if (themeId && FLAVOR_SEEDS[themeId]) return FLAVOR_SEEDS[themeId];
+function themeFor(report: FullReport): ThemeId {
+  const raw = report.ai.themeId;
+  if (raw && raw in COLOR_NOTE) return raw as ThemeId;
   const personality = report.ai.personality ?? '';
   for (const [pattern, key] of FLAVOR_BY_PERSONALITY) {
-    if (pattern.test(personality)) return FLAVOR_SEEDS[key];
+    if (pattern.test(personality)) return key;
   }
-  return FLAVOR_SEEDS.violet;
+  return 'violet';
 }
 
-const NEGATIVE_TAIL = ', no text, no typography, no logos, no watermarks, no faces, no figures';
+function pickVariant(address: string, themeId: ThemeId, raw?: number): Variant {
+  const idx = typeof raw === 'number' && raw >= 0 ? raw : defaultVariantIdx(address);
+  return getVariant(themeId, idx);
+}
 
-/** Ensure a negative-prompt tail is present regardless of LLM compliance. */
-function enforceNegative(text: string): string {
-  const trimmed = text.trim().replace(/^"|"$/g, '');
-  return /no text.*no typography/i.test(trimmed)
+function buildNegative(enrichment: ResolvedEnrichment): string {
+  if (enrichment.forbidden.length === 0) return BASE_NEGATIVE;
+  return `${BASE_NEGATIVE}, ${enrichment.forbidden.map((s) => `no ${s}`).join(', ')}`;
+}
+
+function enforceNegativeTail(text: string, negative: string): string {
+  const trimmed = text.trim().replace(/^["']|["']$/g, '');
+  return trimmed.toLowerCase().includes('no text')
     ? trimmed
-    : trimmed.replace(/[.!]?$/, '') + NEGATIVE_TAIL;
+    : trimmed.replace(/[.!]?$/, '') + ', ' + negative;
+}
+
+function intensityLabel(i: EnrichmentIntensity, hasEnrichment: boolean): string {
+  return hasEnrichment ? i : 'none';
+}
+
+/** Fallback renderer — runs when LLM is unavailable. Routes by intensity. */
+function renderFallback(
+  themeId: ThemeId,
+  variant: Variant,
+  enrichment: ResolvedEnrichment,
+  negative: string
+): string {
+  const seed = variant.flavor;
+  const hasEnrichment = enrichment.id !== '';
+
+  if (!hasEnrichment) {
+    return `${seed}. ${variant.styleHint}. Centered focal region with 40% negative space below, gallery-grade abstract composition, ${negative}`;
+  }
+
+  const subject =
+    enrichment.flavorHint ||
+    enrichment.positive.slice(0, 2).join(', ');
+  const style = enrichment.styleNotes[0] || '';
+
+  if (enrichment.intensity === 'primary') {
+    const color = COLOR_NOTE[themeId];
+    return `${subject}. Color mood: ${color}. Style variant: ${variant.styleHint}. ${style}, centered focal region with 40% negative space below, ${negative}`;
+  }
+
+  if (enrichment.intensity === 'accent') {
+    return `${seed}, overlaid with ${subject}. ${style}, centered focal region with 40% negative space below, ${negative}`;
+  }
+
+  // wash
+  return `${seed}. Mood tint: ${subject}. ${style}, centered focal region with 40% negative space below, ${negative}`;
+}
+
+function buildUserMessage(
+  personality: string,
+  themeId: ThemeId,
+  variant: Variant,
+  enrichment: ResolvedEnrichment,
+  negative: string
+): string {
+  const hasEnrichment = enrichment.id !== '';
+  const intensity = intensityLabel(enrichment.intensity, hasEnrichment);
+
+  const temporalBlock = hasEnrichment
+    ? `TEMPORAL CONTEXT: ${enrichment.id}
+TEMPORAL INTENSITY: ${intensity}
+TEMPORAL IMAGERY (raw cues):
+${enrichment.positive.map((p) => '- ' + p).join('\n')}${
+        enrichment.flavorHint
+          ? `
+ARCHETYPE × TEMPORAL BLEND HINT (use this verbatim as the central image when intensity is "primary"): ${enrichment.flavorHint}`
+          : ''
+      }${
+        enrichment.styleNotes.length
+          ? `
+STYLE NOTES: ${enrichment.styleNotes.join('; ')}`
+          : ''
+      }
+
+TABOO — absolutely do not depict in any form, stylized or literal:
+${enrichment.forbidden.length ? enrichment.forbidden.map((f) => '- ' + f).join('\n') : '- (none beyond the negative block)'}`
+    : 'TEMPORAL CONTEXT: none\nTEMPORAL INTENSITY: none';
+
+  return `ARCHETYPE: "${personality}" (color mood: ${themeId} = ${COLOR_NOTE[themeId]})
+STYLE VARIANT: ${variant.id} — ${variant.styleHint}
+ARCHETYPE SEED (adopt this variant's angle as the archetype's visual energy; when intensity is "primary", still route temporal as the subject):
+"${variant.flavor}"
+
+${temporalBlock}
+
+NEGATIVE BLOCK (append to the end of your output, verbatim, prefixed with a comma):
+${negative}
+
+Write a 60-100 word abstract art prompt following the routing rules in the system message.`;
+}
+
+export interface BuildArtBriefOptions {
+  mode?: EnrichmentMode;
+  now?: Date;
+  variantIdx?: number;   // -1 / undefined → address-hashed default
 }
 
 /** Generate an art brief for a wallet report. Always returns a usable prompt. */
-export async function buildArtBrief(report: FullReport): Promise<string> {
-  const seed = seedFor(report);
-  const { personality = 'wallet archetype' } = report.ai;
-  const { totalTransactions, peakHour, swapCount, activeProtocols } = report.profile;
+export async function buildArtBrief(
+  report: FullReport,
+  opts: BuildArtBriefOptions = {}
+): Promise<string> {
+  const mode = opts.mode ?? 'on';
+  const now = opts.now ?? new Date();
 
-  const userPrompt = `Wallet archetype: "${personality}".
-Signal:
-- ${totalTransactions} total transactions, ${swapCount} swaps
-- peak activity hour: ${peakHour} UTC
-- ${activeProtocols.length} active protocols
+  const themeId = themeFor(report);
+  const variant = pickVariant(report.profile.address, themeId, opts.variantIdx);
+  const temporal = buildTemporalContext(now);
+  const enrichment = resolveEnrichment(
+    { temporal, profile: { firstTransactionDate: report.profile.firstTransactionDate } },
+    mode,
+    themeId
+  );
 
-Reference style seed for this archetype:
-"${seed}"
-
-Write a 60-100 word abstract art prompt that matches this archetype, following the system rules.`;
+  const negative = buildNegative(enrichment);
+  const personality = report.ai.personality ?? 'wallet archetype';
+  const userMessage = buildUserMessage(personality, themeId, variant, enrichment, negative);
 
   const text = await generateText({
     system: SYSTEM_PROMPT,
-    user: userPrompt,
-    maxTokens: 260,
+    user: userMessage,
+    maxTokens: 320,
     temperature: 0.9,
   });
 
-  if (!text || text.trim().length < 40) return enforceNegative(seed);
-  return enforceNegative(text);
+  if (!text || text.trim().length < 40) return renderFallback(themeId, variant, enrichment, negative);
+  return enforceNegativeTail(text, negative);
+}
+
+/** Resolves the variant id chosen for a given report + override. */
+export function resolveVariantIdFor(
+  report: FullReport,
+  variantIdx?: number
+): string {
+  const themeId = themeFor(report);
+  const variant = pickVariant(report.profile.address, themeId, variantIdx);
+  return variant.id;
+}
+
+/** Resolves just the enrichment id — used as part of the cache key. */
+export function resolveEnrichmentIdFor(
+  report: FullReport,
+  mode: EnrichmentMode,
+  now: Date = new Date()
+): string {
+  if (mode === 'off') return '';
+  const themeId = themeFor(report);
+  const temporal = buildTemporalContext(now);
+  return resolveEnrichment(
+    { temporal, profile: { firstTransactionDate: report.profile.firstTransactionDate } },
+    mode,
+    themeId
+  ).id;
 }

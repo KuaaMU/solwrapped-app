@@ -29,25 +29,25 @@ export function ScanScreen({
   const shownStatus = stuck ? "LARGE WALLET — STILL SCANNING..." : status;
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-8 min-h-screen relative ambient-glow scanlines">
+    <div className="flex flex-1 flex-col items-center justify-center gap-8 min-h-screen relative ambient-glow scanlines px-4">
       <div className="scan-bar" aria-hidden="true" />
 
       <motion.div
-        className="flex flex-col items-center gap-8 z-10"
+        className="flex flex-col items-center gap-8 z-10 w-full max-w-xs"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
         <Logo size={180} pulse />
 
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-2 max-w-full">
           <span className="h-tagline">UNWRAPPING</span>
-          <span className="h-display text-xl tracking-[0.15em]">
+          <span className="h-display text-xl tracking-[0.15em] truncate max-w-full">
             {address.slice(0, 8)}...
           </span>
         </div>
 
-        <div className="surface contour p-5 w-80">
+        <div className="surface contour p-5 w-full">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-[var(--sol-purple)] animate-pulse" />

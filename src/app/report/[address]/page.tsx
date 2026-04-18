@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { Logo } from "@/components/Logo";
 import { ScanScreen } from "@/components/report/ScanScreen";
@@ -42,7 +42,12 @@ const LOADING_STAGES = [
 
 export default function ReportPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const address = params.address as string;
+  const rawMode = searchParams.get("mode");
+  const mode: "on" | "festival-only" | "off" =
+    rawMode === "off" || rawMode === "festival-only" ? rawMode : "on";
+  const cardQuery = mode === "on" ? "" : `?mode=${mode}`;
   const [report, setReport] = useState<FullReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -70,7 +75,7 @@ export default function ReportPage() {
         setStatusText("COMPLETE");
         if (data.status === "complete" && data.report) {
           // Warm the AI card cache in the background so the share modal is instant.
-          fetch(`/api/card/${address}`).catch(() => {});
+          fetch(`/api/card/${address}${cardQuery}`).catch(() => {});
           setTimeout(() => {
             setReport(data.report!);
             setLoading(false);
@@ -87,7 +92,7 @@ export default function ReportPage() {
       });
 
     return () => clearInterval(interval);
-  }, [address]);
+  }, [address, cardQuery]);
 
   if (loading) return <ScanScreen progress={progress} status={statusText} address={address} />;
 
@@ -140,7 +145,7 @@ export default function ReportPage() {
           </motion.div>
 
           <motion.div variants={scalePop} className="flex flex-col items-center gap-4 py-4">
-            <Logo profile={p} accent={theme.accent} size={300} pulse />
+            <Logo profile={p} accent={theme.accent} size="min(300px, 72vw)" pulse />
             <div className="flex flex-col items-center gap-2 -mt-6">
               <span className="mono-label">ON-CHAIN PERSONALITY</span>
               <h1 className="h-display-xl text-center" style={{ letterSpacing: "0.12em" }}>
@@ -259,6 +264,7 @@ export default function ReportPage() {
             ai={ai}
             profile={p}
             badges={badges}
+            mode={mode}
           />
 
           <motion.div

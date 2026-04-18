@@ -1,17 +1,41 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Logo } from "@/components/Logo";
 import { validateAddress } from "@/lib/address";
 
+type GenMode = "on" | "festival-only" | "off";
+const MODE_STORAGE_KEY = "solwrapped-mode";
+
 export default function Home() {
   const [address, setAddress] = useState("");
   const [error, setError] = useState("");
   const [focused, setFocused] = useState(false);
+  const [mode, setMode] = useState<GenMode>("on");
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(MODE_STORAGE_KEY);
+      if (saved === "on" || saved === "festival-only" || saved === "off") {
+        setMode(saved);
+      }
+    } catch {
+      // localStorage unavailable — silently keep default
+    }
+  }, []);
+
+  const updateMode = (next: GenMode) => {
+    setMode(next);
+    try {
+      localStorage.setItem(MODE_STORAGE_KEY, next);
+    } catch {
+      // no-op
+    }
+  };
 
   const handleAnalyze = () => {
     const check = validateAddress(address);
@@ -21,7 +45,8 @@ export default function Home() {
       return;
     }
     setError("");
-    router.push(`/report/${check.address}`);
+    const query = mode === "on" ? "" : `?mode=${mode}`;
+    router.push(`/report/${check.address}${query}`);
   };
 
   const handleDemoSelect = (value: string) => {
@@ -55,7 +80,7 @@ export default function Home() {
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           >
             <Logo
-              size={280}
+              size="min(280px, 72vw)"
               pulse
               interactive
               className="select-none"
@@ -160,6 +185,36 @@ export default function Home() {
             </AnimatePresence>
           </motion.div>
 
+          {/* Generation mode — seasonal / festival / none */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="flex flex-col items-center gap-2 -mt-2"
+          >
+            <span className="mono-label">GENERATION MODE</span>
+            <div className="flex gap-1" role="radiogroup" aria-label="Generation mode">
+              <ModeOption
+                active={mode === "on"}
+                label="SEASONAL"
+                hint="Festival + solar term + season context"
+                onClick={() => updateMode("on")}
+              />
+              <ModeOption
+                active={mode === "festival-only"}
+                label="FESTIVAL"
+                hint="Only major festivals — no seasons"
+                onClick={() => updateMode("festival-only")}
+              />
+              <ModeOption
+                active={mode === "off"}
+                label="OFF"
+                hint="Pure archetype — no time context"
+                onClick={() => updateMode("off")}
+              />
+            </div>
+          </motion.div>
+
           <div className="divider" />
 
           {/* Demo pills */}
@@ -212,6 +267,35 @@ function DemoPill({ label, onClick }: { label: string; onClick: () => void }) {
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
       className="tag hover:border-[var(--sol-purple)] hover:text-[var(--sol-purple)] hover:bg-[var(--sol-purple-faint)] hover:shadow-[0_0_14px_rgba(153,69,255,0.3)] transition-all cursor-pointer active:shadow-[0_0_20px_rgba(153,69,255,0.5)]"
+    >
+      {label}
+    </motion.button>
+  );
+}
+
+function ModeOption({
+  active,
+  label,
+  hint,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  hint: string;
+  onClick: () => void;
+}) {
+  return (
+    <motion.button
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.97 }}
+      onClick={onClick}
+      title={hint}
+      aria-pressed={active}
+      className={`tag cursor-pointer transition-all ${
+        active
+          ? "border-[var(--sol-teal)] text-[var(--sol-teal)] bg-[var(--sol-teal-faint)] shadow-[0_0_14px_rgba(20,241,149,0.25)]"
+          : "text-[var(--text-tertiary)] hover:text-[var(--text)] hover:border-[var(--border-strong)]"
+      }`}
     >
       {label}
     </motion.button>

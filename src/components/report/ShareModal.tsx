@@ -4,6 +4,13 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AIReport, WalletProfile, Badge } from "@/lib/types";
 import { formatFee } from "./ReportAtoms";
+import {
+  VARIANTS_BY_THEME,
+  VARIANTS_PER_THEME,
+  defaultVariantIdx,
+  getVariant,
+} from "@/lib/ai-card/variants";
+import type { ThemeId } from "@/lib/ai-card/enrichments";
 
 type CardTab = "ai" | "standard";
 
@@ -14,6 +21,13 @@ interface ShareModalProps {
   ai: AIReport;
   profile: WalletProfile;
   badges: Badge[];
+  mode?: 'on' | 'festival-only' | 'off';
+}
+
+function themeOf(ai: AIReport): ThemeId {
+  const raw = ai.themeId;
+  if (raw && raw in VARIANTS_BY_THEME) return raw as ThemeId;
+  return 'violet';
 }
 
 export function ShareModal({
@@ -23,16 +37,21 @@ export function ShareModal({
   ai,
   profile,
   badges,
+  mode = 'on',
 }: ShareModalProps) {
+  const themeId = themeOf(ai);
   const [tab, setTab] = useState<CardTab>("ai");
-  const [loadedTabs, setLoadedTabs] = useState<Record<CardTab, boolean>>({
-    ai: false,
-    standard: false,
-  });
+  const [variantIdx, setVariantIdx] = useState(() => defaultVariantIdx(address));
+  const [loadedVariants, setLoadedVariants] = useState<Record<number, boolean>>({});
+  const [standardLoaded, setStandardLoaded] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
 
+  const variant = useMemo(() => getVariant(themeId, variantIdx), [themeId, variantIdx]);
+
   const standardUrl = `/api/og/${address}`;
-  const aiUrl = `/api/card/${address}`;
+  const aiUrlBase = `/api/card/${address}`;
+  const aiQuery = `${mode !== 'on' ? `mode=${mode}&` : ''}v=${variantIdx}`;
+  const aiUrl = `${aiUrlBase}?${aiQuery}`;
   const activeUrl = tab === "ai" ? aiUrl : standardUrl;
 
   const shareUrl = typeof window !== "undefined"
@@ -81,11 +100,13 @@ export function ShareModal({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `solwrapped-${tab}-${address.slice(0, 8)}.png`;
+    a.download = tab === 'ai'
+      ? `solwrapped-${variant.id.toLowerCase()}-${address.slice(0, 8)}.png`
+      : `solwrapped-standard-${address.slice(0, 8)}.png`;
     a.click();
     URL.revokeObjectURL(url);
     flash("download");
-  }, [activeUrl, address, tab, flash]);
+  }, [activeUrl, address, tab, variant.id, flash]);
 
   const handleCopyLink = useCallback(async () => {
     await navigator.clipboard.writeText(shareUrl);
@@ -109,14 +130,26 @@ export function ShareModal({
     return () => window.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  const markLoaded = (key: CardTab) =>
-    setLoadedTabs((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
+  const markLoaded = useCallback((key: CardTab, idx: number) => {
+    if (key === 'ai') {
+      setLoadedVariants((prev) => (prev[idx] ? prev : { ...prev, [idx]: true }));
+    } else {
+      setStandardLoaded(true);
+    }
+  }, []);
+
+  const handleReroll = useCallback(() => {
+    setVariantIdx((i) => (i + 1) % VARIANTS_PER_THEME);
+  }, []);
+
+  const aiLoaded = !!loadedVariants[variantIdx];
+  const previewLoaded = tab === 'ai' ? aiLoaded : standardLoaded;
 
   return (
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -128,7 +161,7 @@ export function ShareModal({
           />
 
           <motion.div
-            className="relative w-full max-w-2xl surface contour overflow-hidden"
+            className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto surface contour overflow-x-hidden"
             initial={{ scale: 0.94, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.94, opacity: 0, y: 20 }}
@@ -143,39 +176,60 @@ export function ShareModal({
               ✕
             </button>
 
-            <div className="px-6 pt-5 pb-3">
+            <div className="px-4 sm:px-6 pt-5 pb-3">
               <div className="mono-label text-[var(--sol-purple)]">SHARE YOUR CARD</div>
             </div>
 
-            {/* Tab switch */}
-            <div className="px-6 pb-3 flex gap-1">
-              <TabButton active={tab === "ai"} onClick={() => setTab("ai")}>
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--sol-teal)] mr-2" />
-                AI CARD
-              </TabButton>
-              <TabButton active={tab === "standard"} onClick={() => setTab("standard")}>
-                STANDARD
-              </TabButton>
+            {/* Tab switch + variant badge + REROLL */}
+            <div className="px-4 sm:px-6 pb-3 flex items-center gap-2 flex-wrap">
+              <div className="flex gap-1">
+                <TabButton active={tab === "ai"} onClick={() => setTab("ai")}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--sol-teal)] mr-2" />
+                  AI CARD
+                </TabButton>
+                <TabButton active={tab === "standard"} onClick={() => setTab("standard")}>
+                  STANDARD
+                </TabButton>
+              </div>
+
+              {tab === "ai" && (
+                <div className="flex items-center gap-1.5 ml-auto">
+                  <span className="font-mono text-[10px] tracking-[0.25em] text-[var(--sol-teal)] px-2 py-1 border border-[var(--sol-teal)] rounded-sm bg-[var(--sol-teal-faint)]">
+                    {variant.id}
+                  </span>
+                  <span className="font-mono text-[9px] tracking-[0.2em] text-[var(--text-tertiary)] tabular-nums">
+                    {variantIdx + 1}/{VARIANTS_PER_THEME}
+                  </span>
+                  <button
+                    onClick={handleReroll}
+                    title={`Reroll — ${variant.styleHint}`}
+                    className="font-mono text-[10px] tracking-[0.2em] text-[var(--text-tertiary)] hover:text-[var(--sol-purple)] border border-[var(--border)] hover:border-[var(--sol-purple)] px-2 py-1 rounded-sm transition-colors cursor-pointer bg-transparent"
+                  >
+                    ⟲ REROLL
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Card preview */}
-            <div className="px-6">
+            <div className="px-4 sm:px-6">
               <div className="relative w-full aspect-[1200/630] bg-[var(--bg)] border border-[var(--border)] overflow-hidden rounded-sm">
-                {!loadedTabs[tab] && (
+                {!previewLoaded && (
                   <LoadingOverlay label={tab === "ai" ? "GENERATING ARTWORK" : "LOADING CARD"} />
                 )}
-                {/* Render both images so switching tabs is instant after first load */}
+                {/* Key forces image reload when variant changes */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
+                  key={`ai-${variantIdx}`}
                   src={aiUrl}
                   alt="AI share card preview"
                   className="absolute inset-0 w-full h-full object-contain"
                   style={{
-                    opacity: tab === "ai" && loadedTabs.ai ? 1 : 0,
+                    opacity: tab === "ai" && aiLoaded ? 1 : 0,
                     transition: "opacity 0.3s",
                     pointerEvents: tab === "ai" ? "auto" : "none",
                   }}
-                  onLoad={() => markLoaded("ai")}
+                  onLoad={() => markLoaded("ai", variantIdx)}
                 />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -183,17 +237,17 @@ export function ShareModal({
                   alt="Standard share card preview"
                   className="absolute inset-0 w-full h-full object-contain"
                   style={{
-                    opacity: tab === "standard" && loadedTabs.standard ? 1 : 0,
+                    opacity: tab === "standard" && standardLoaded ? 1 : 0,
                     transition: "opacity 0.3s",
                     pointerEvents: tab === "standard" ? "auto" : "none",
                   }}
-                  onLoad={() => markLoaded("standard")}
+                  onLoad={() => markLoaded("standard", 0)}
                 />
               </div>
             </div>
 
             {/* Tweet preview */}
-            <div className="px-6 pt-4">
+            <div className="px-4 sm:px-6 pt-4">
               <div className="bg-[var(--bg)] border border-[var(--border)] rounded-md p-3 font-mono text-[11px] text-[var(--text-secondary)] leading-relaxed whitespace-pre-line">
                 {tweetText}
                 <span className="block mt-1 text-[var(--sol-purple)]">
@@ -203,7 +257,7 @@ export function ShareModal({
             </div>
 
             {/* Action buttons */}
-            <div className="px-6 pt-4 pb-6 flex flex-col gap-2">
+            <div className="px-4 sm:px-6 pt-4 pb-6 flex flex-col gap-2">
               <div className="flex gap-2">
                 <button
                   onClick={handleShareX}
