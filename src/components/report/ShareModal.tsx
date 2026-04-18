@@ -138,12 +138,20 @@ export function ShareModal({
     }
   }, []);
 
-  const handleReroll = useCallback(() => {
-    setVariantIdx((i) => (i + 1) % VARIANTS_PER_THEME);
+  // Which variants the user has "drawn" in this session. Drawn ones can be
+  // switched to instantly (warm cache); undrawn ones require a fresh generation.
+  const [drawnVariants, setDrawnVariants] = useState<Record<number, boolean>>(
+    () => ({ [defaultVariantIdx(address)]: true })
+  );
+
+  const selectVariant = useCallback((idx: number) => {
+    setVariantIdx(idx);
+    setDrawnVariants((prev) => (prev[idx] ? prev : { ...prev, [idx]: true }));
   }, []);
 
   const aiLoaded = !!loadedVariants[variantIdx];
   const previewLoaded = tab === 'ai' ? aiLoaded : standardLoaded;
+  const drawnCount = Object.keys(drawnVariants).length;
 
   return (
     <AnimatePresence>
@@ -180,7 +188,7 @@ export function ShareModal({
               <div className="mono-label text-[var(--sol-purple)]">SHARE YOUR CARD</div>
             </div>
 
-            {/* Tab switch + variant badge + REROLL */}
+            {/* Tab switch + variant picker */}
             <div className="px-4 sm:px-6 pb-3 flex items-center gap-2 flex-wrap">
               <div className="flex gap-1">
                 <TabButton active={tab === "ai"} onClick={() => setTab("ai")}>
@@ -194,19 +202,32 @@ export function ShareModal({
 
               {tab === "ai" && (
                 <div className="flex items-center gap-1.5 ml-auto">
-                  <span className="font-mono text-[10px] tracking-[0.25em] text-[var(--sol-teal)] px-2 py-1 border border-[var(--sol-teal)] rounded-sm bg-[var(--sol-teal-faint)]">
-                    {variant.id}
+                  <span className="font-mono text-[9px] tracking-[0.2em] text-[var(--text-tertiary)] mr-1 tabular-nums">
+                    {drawnCount}/{VARIANTS_PER_THEME}
                   </span>
-                  <span className="font-mono text-[9px] tracking-[0.2em] text-[var(--text-tertiary)] tabular-nums">
-                    {variantIdx + 1}/{VARIANTS_PER_THEME}
-                  </span>
-                  <button
-                    onClick={handleReroll}
-                    title={`Reroll — ${variant.styleHint}`}
-                    className="font-mono text-[10px] tracking-[0.2em] text-[var(--text-tertiary)] hover:text-[var(--sol-purple)] border border-[var(--border)] hover:border-[var(--sol-purple)] px-2 py-1 rounded-sm transition-colors cursor-pointer bg-transparent"
-                  >
-                    ⟲ REROLL
-                  </button>
+                  {Array.from({ length: VARIANTS_PER_THEME }).map((_, i) => {
+                    const slot = getVariant(themeId, i);
+                    const drawn = !!drawnVariants[i];
+                    const active = i === variantIdx;
+                    const disabled = !aiLoaded && i !== variantIdx;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => selectVariant(i)}
+                        disabled={disabled}
+                        title={drawn ? `${slot.id} — ${slot.styleHint}` : `Draw slot ${i + 1}`}
+                        className={`font-mono text-[10px] tracking-[0.15em] px-2 py-1 rounded-sm border transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 bg-transparent ${
+                          active
+                            ? 'border-[var(--sol-teal)] text-[var(--sol-teal)] bg-[var(--sol-teal-faint)]'
+                            : drawn
+                              ? 'border-[var(--border-strong)] text-[var(--text-secondary)] hover:text-[var(--text)]'
+                              : 'border-dashed border-[var(--border)] text-[var(--text-disabled)] hover:text-[var(--sol-purple)] hover:border-[var(--sol-purple)]'
+                        }`}
+                      >
+                        {drawn ? slot.id : `▢${i + 1}`}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

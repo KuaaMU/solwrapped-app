@@ -1,12 +1,13 @@
 // AI card pipeline entry point.
 // Orchestrates: art brief (LLM, with enrichment registry + style variant) →
-// image provider (Volcengine 即梦 4.0 preferred, fal.ai fallback) →
-// sharp composition → cached PNG.
+// Volcengine 即梦 4.0 image → sharp composition → cached PNG.
+//
+// fal.ai remains on disk (`./fal.ts`) as a dormant fallback but is not wired
+// into the active chain; the user's fal.ai account has zero balance.
 
 import type { FullReport } from '../types';
 import { buildArtBrief, resolveEnrichmentIdFor, resolveVariantIdFor } from './prompt';
 import { generateVolcImage, hasVolcCredentials } from './volcengine';
-import { generateFalImage } from './fal';
 import { composeCard } from './compositor';
 import { getCachedCard, setCachedCard, withInflight, type CacheKeyParts } from './cache';
 import { buildTemporalContext, type EnrichmentMode } from './enrichments';
@@ -14,7 +15,7 @@ import { buildTemporalContext, type EnrichmentMode } from './enrichments';
 export interface GenerateCardResult {
   buffer: Buffer;
   source: 'cache' | 'fresh';
-  provider: 'volcengine' | 'fal';
+  provider: 'volcengine';
   enrichmentId: string;
   variantId: string;
 }
@@ -22,20 +23,16 @@ export interface GenerateCardResult {
 export interface GenerateCardOptions {
   mode?: EnrichmentMode;
   now?: Date;
-  variantIdx?: number;   // undefined / -1 → default (address-hashed)
+  variantIdx?: number;
 }
 
 async function generateBackground(
   prompt: string,
   address: string
-): Promise<{ buffer: Buffer; provider: 'volcengine' | 'fal' } | null> {
-  if (hasVolcCredentials()) {
-    const buffer = await generateVolcImage({ prompt, address });
-    if (buffer) return { buffer, provider: 'volcengine' };
-  }
-  const buffer = await generateFalImage({ prompt, address });
-  if (buffer) return { buffer, provider: 'fal' };
-  return null;
+): Promise<{ buffer: Buffer; provider: 'volcengine' } | null> {
+  if (!hasVolcCredentials()) return null;
+  const buffer = await generateVolcImage({ prompt, address });
+  return buffer ? { buffer, provider: 'volcengine' } : null;
 }
 
 /**

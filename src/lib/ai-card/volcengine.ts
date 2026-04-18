@@ -1,5 +1,9 @@
 // Volcengine 即梦 4.0 (jimeng_t2i_v40) image generation.
 // Async flow: submit task → poll GetResult until status=done → download PNG.
+//
+// Free-tier note: 即梦 4.0 caps concurrent submits per account. We serialize
+// submits through a tiny in-process semaphore (CARD_VOLC_CONCURRENCY, default 1)
+// and retry once on HTTP 429.
 
 import { signRequest } from './volcengine-sign';
 
@@ -9,13 +13,12 @@ const SERVICE = 'cv';
 const VERSION = '2022-08-31';
 const REQ_KEY = 'jimeng_t2i_v40';
 
-// Target output dimensions — spec recommends 2K 16:9 = 2560x1440. Well within
-// the [1024*1024, 4096*4096] area constraint, crops cleanly to 1200x630.
 const GEN_WIDTH = 2560;
 const GEN_HEIGHT = 1440;
 
 const POLL_INTERVAL_MS = 1500;
 const POLL_TIMEOUT_MS = 60_000;
+const RATE_LIMIT_BACKOFF_MS = 6000;
 
 export interface VolcImageRequest {
   prompt: string;
@@ -29,9 +32,39 @@ function getCreds(): { ak: string; sk: string } | null {
   return { ak, sk };
 }
 
-async function callVolc(action: string, body: Record<string, unknown>): Promise<unknown | null> {
+// ---- in-process concurrency gate ----
+function getMaxConcurrent(): number {
+  const raw = parseInt(process.env.CARD_VOLC_CONCURRENCY ?? '', 10);
+  return Number.isFinite(raw) && raw > 0 ? raw : 1;
+}
+
+let active = 0;
+const waiters: Array<() => void> = [];
+
+async function acquireSlot(): Promise<void> {
+  const max = getMaxConcurrent();
+  if (active < max) {
+    active += 1;
+    return;
+  }
+  await new Promise<void>((resolve) => waiters.push(resolve));
+  active += 1;
+}
+
+function releaseSlot(): void {
+  active -= 1;
+  const next = waiters.shift();
+  if (next) next();
+}
+
+interface CallResult {
+  data: unknown | null;
+  rateLimited: boolean;
+}
+
+async function callVolc(action: string, body: Record<string, unknown>): Promise<CallResult> {
   const creds = getCreds();
-  if (!creds) return null;
+  if (!creds) return { data: null, rateLimited: false };
 
   const payload = JSON.stringify(body);
   const { url, headers } = signRequest({
@@ -48,15 +81,18 @@ async function callVolc(action: string, body: Record<string, unknown>): Promise<
 
   const res = await fetch(url, { method: 'POST', headers, body: payload });
   if (!res.ok) {
-    console.error(`[volcengine] ${action} http ${res.status}:`, await res.text());
-    return null;
+    const text = await res.text();
+    console.error(`[volcengine] ${action} http ${res.status}:`, text);
+    // 429 surfaces either at the HTTP layer or as code 50430 in the JSON body.
+    const rateLimited = res.status === 429 || text.includes('50430');
+    return { data: null, rateLimited };
   }
   const json = await res.json();
   if (json.code !== 10000) {
     console.error(`[volcengine] ${action} code ${json.code}:`, json.message);
-    return null;
+    return { data: null, rateLimited: json.code === 50430 };
   }
-  return json.data;
+  return { data: json.data, rateLimited: false };
 }
 
 interface SubmitResult { task_id: string }
@@ -67,15 +103,25 @@ interface QueryResult {
 }
 
 async function submitTask(req: VolcImageRequest): Promise<string | null> {
-  const data = (await callVolc('CVSync2AsyncSubmitTask', {
-    req_key: REQ_KEY,
-    prompt: req.prompt,
-    width: GEN_WIDTH,
-    height: GEN_HEIGHT,
-    scale: 0.5,
-    force_single: true,
-  })) as SubmitResult | null;
-  return data?.task_id ?? null;
+  let attempt = 0;
+  while (attempt < 2) {
+    const { data, rateLimited } = await callVolc('CVSync2AsyncSubmitTask', {
+      req_key: REQ_KEY,
+      prompt: req.prompt,
+      width: GEN_WIDTH,
+      height: GEN_HEIGHT,
+      scale: 0.5,
+      force_single: true,
+    });
+    if (data) return (data as SubmitResult).task_id ?? null;
+    if (!rateLimited) return null;
+    attempt += 1;
+    if (attempt < 2) {
+      console.warn(`[volcengine] submit rate-limited, retrying in ${RATE_LIMIT_BACKOFF_MS}ms`);
+      await new Promise((r) => setTimeout(r, RATE_LIMIT_BACKOFF_MS));
+    }
+  }
+  return null;
 }
 
 async function pollResult(taskId: string): Promise<string | null> {
@@ -86,19 +132,19 @@ async function pollResult(taskId: string): Promise<string | null> {
   });
 
   while (Date.now() < deadline) {
-    const data = (await callVolc('CVSync2AsyncGetResult', {
+    const { data } = await callVolc('CVSync2AsyncGetResult', {
       req_key: REQ_KEY,
       task_id: taskId,
       req_json: reqJson,
-    })) as QueryResult | null;
+    });
 
     if (!data) return null;
-    if (data.status === 'done') {
-      const url = data.image_urls?.[0];
-      return url ?? null;
+    const result = data as QueryResult;
+    if (result.status === 'done') {
+      return result.image_urls?.[0] ?? null;
     }
-    if (data.status === 'not_found' || data.status === 'expired') {
-      console.error(`[volcengine] task ${taskId} ${data.status}`);
+    if (result.status === 'not_found' || result.status === 'expired') {
+      console.error(`[volcengine] task ${taskId} ${result.status}`);
       return null;
     }
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
@@ -109,8 +155,10 @@ async function pollResult(taskId: string): Promise<string | null> {
 
 /**
  * Generate an image via 即梦 4.0. Returns raw JPEG/PNG bytes or null on any failure.
+ * Serializes against the in-process slot to respect the free-tier concurrency cap.
  */
 export async function generateVolcImage(req: VolcImageRequest): Promise<Buffer | null> {
+  await acquireSlot();
   try {
     const taskId = await submitTask(req);
     if (!taskId) return null;
@@ -128,6 +176,8 @@ export async function generateVolcImage(req: VolcImageRequest): Promise<Buffer |
   } catch (err) {
     console.error('[volcengine] generation failed:', err);
     return null;
+  } finally {
+    releaseSlot();
   }
 }
 

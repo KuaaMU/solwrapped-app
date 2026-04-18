@@ -8,7 +8,7 @@
 // TTL: dated cards (enrichment present) expire at end-of-day CN, matching the
 // enrichment layer's 24h horizon. Neutral cards (no enrichment) live 7 days.
 
-type Provider = 'volcengine' | 'fal';
+type Provider = 'volcengine';
 
 interface CacheEntry {
   buffer: Buffer;

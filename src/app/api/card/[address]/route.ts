@@ -1,11 +1,16 @@
 // /api/card/[address] — Node runtime. Returns the AI card as PNG.
 // Falls back to the Satori OG card on missing deps/key or upstream failure,
-// and also on a soft-timeout so Vercel Hobby's 10s function cap doesn't produce
-// a 504 to the client.
+// and (when CARD_TIMEOUT_MS is set) on a soft-timeout so Vercel Hobby's 10s
+// function cap doesn't return a 504 to the client.
 //
 // Query params:
 //   mode = on | festival-only | off
 //   v    = 0-3 (style variant index; default = address-hashed)
+//
+// Env:
+//   CARD_TIMEOUT_MS — milliseconds before we surrender to the Satori fallback.
+//     Unset / 0 → no timeout (local dev, Fly.io, Vercel Pro).
+//     8500       → recommended for Vercel Hobby (10s function cap).
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCachedReport } from '@/lib/cache';
@@ -16,11 +21,12 @@ import { normalizeVariantIdx } from '@/lib/ai-card/variants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Hobby plan hard-caps at 10s. `maxDuration` is capped by the platform; setting
-// it here is harmless on both Hobby and Pro.
 export const maxDuration = 60;
 
-const SOFT_TIMEOUT_MS = 8500;
+function softTimeoutMs(): number {
+  const raw = parseInt(process.env.CARD_TIMEOUT_MS ?? '', 10);
+  return Number.isFinite(raw) && raw > 0 ? raw : 0;
+}
 
 function timeoutTag(ms: number): Promise<null> {
   return new Promise((resolve) => setTimeout(() => resolve(null), ms));
@@ -43,12 +49,12 @@ export async function GET(
     return NextResponse.redirect(new URL(`/api/og/${address}`, request.url), 302);
   }
 
-  // Soft timeout: if generation takes too long we surrender to the Satori OG
-  // fallback so the caller gets *something* within Vercel's function budget.
-  const result = await Promise.race([
-    generateAICard(report, { mode, variantIdx }),
-    timeoutTag(SOFT_TIMEOUT_MS),
-  ]);
+  const timeout = softTimeoutMs();
+  const generation = generateAICard(report, { mode, variantIdx });
+  const result =
+    timeout > 0
+      ? await Promise.race([generation, timeoutTag(timeout)])
+      : await generation;
 
   if (!result) {
     return NextResponse.redirect(new URL(`/api/og/${address}`, request.url), 302);
