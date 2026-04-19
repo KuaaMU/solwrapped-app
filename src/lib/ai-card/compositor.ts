@@ -67,46 +67,36 @@ function buildTextSvg(report: FullReport): string {
   const frontierActive = report.badges?.some((b) => b.id === 'frontier-26');
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${OUT_W}" height="${OUT_H}">
-    <style>
-      .brand { font: 400 38px 'Inter'; letter-spacing: 6px; fill: #ffffff; }
-      .brand-sub { font: 400 20px 'JetBrains Mono'; letter-spacing: 4px; fill: #d0d0d0; }
-      .personality { font: 400 128px 'Inter'; letter-spacing: 5px; fill: #ffffff; }
-      .stats { font: 400 52px 'JetBrains Mono'; letter-spacing: 1px; fill: #ffffff; }
-      .addr { font: 400 26px 'JetBrains Mono'; letter-spacing: 1px; fill: #b8b8b8; }
-      .accent { fill: ${accent}; }
-      .chip-text { font: 400 18px 'JetBrains Mono'; letter-spacing: 3px; fill: #050505; }
-    </style>
-
     <!-- Brand wordmark — below top-left logo -->
     <g transform="translate(200, 82)">
-      <text class="brand">SolWrapped</text>
-      <text class="brand-sub" y="32">WALLET TELLS A STORY</text>
+      <text font-family="Inter" font-weight="400" font-size="38" letter-spacing="6" fill="#ffffff">SolWrapped</text>
+      <text font-family="JetBrains Mono" font-weight="400" font-size="20" letter-spacing="4" fill="#d0d0d0" y="32">WALLET TELLS A STORY</text>
     </g>
 
     <!-- Personality name — bottom-left -->
     <g transform="translate(40, ${OUT_H - 130})">
-      <text class="personality">${personality}</text>
+      <text font-family="Inter" font-weight="400" font-size="128" letter-spacing="5" fill="#ffffff">${personality}</text>
     </g>
 
     <!-- Stats row -->
     <g transform="translate(40, ${OUT_H - 50})">
-      <text class="stats">
-        <tspan class="accent">${txs}</tspan> TX
-        <tspan dx="22" class="accent">${days}</tspan> DAYS
-        <tspan dx="22" class="accent">${vol}</tspan> SOL
+      <text font-family="JetBrains Mono" font-weight="400" font-size="52" letter-spacing="1" fill="#ffffff">
+        <tspan fill="${accent}">${txs}</tspan> TX
+        <tspan dx="22" fill="${accent}">${days}</tspan> DAYS
+        <tspan dx="22" fill="${accent}">${vol}</tspan> SOL
       </text>
     </g>
 
     <!-- Address — bottom-right -->
     <g transform="translate(${OUT_W - 40}, ${OUT_H - 24})">
-      <text class="addr" text-anchor="end">${shortAddr}</text>
+      <text font-family="JetBrains Mono" font-weight="400" font-size="26" letter-spacing="1" fill="#b8b8b8" text-anchor="end">${shortAddr}</text>
     </g>
 
     ${frontierActive ? `
     <!-- Frontier 26 gold chip — top-right to avoid colliding with the big stats row -->
     <g transform="translate(${OUT_W - 236}, 42)">
       <rect x="0" y="0" width="196" height="40" rx="2" fill="${accent}" opacity="0.95"/>
-      <text class="chip-text" x="18" y="26">FRONTIER 26</text>
+      <text font-family="JetBrains Mono" font-weight="400" font-size="18" letter-spacing="3" fill="#050505" x="18" y="26">FRONTIER 26</text>
     </g>` : ''}
   </svg>`;
 }

@@ -45,7 +45,7 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=604800, immutable',
+        'Cache-Control': 'public, max-age=300, s-maxage=3600, must-revalidate',
         'X-Card-Source': result.source,
         'X-Card-Provider': result.provider,
         'X-Card-Enrichment': result.enrichmentId || 'none',
