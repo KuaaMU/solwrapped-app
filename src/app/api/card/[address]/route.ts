@@ -35,29 +35,28 @@ export async function GET(
     return redirectToFallback(request, address);
   }
 
-  let result;
   try {
-    result = await generateAICard(report, { mode, variantIdx });
-  } catch (err) {
-    console.error('[card] generateAICard threw:', err);
-    return redirectToFallback(request, address);
-  }
-  if (!result) {
-    return redirectToFallback(request, address);
-  }
+    const result = await generateAICard(report, { mode, variantIdx });
+    if (!result) {
+      return redirectToFallback(request, address);
+    }
 
-  return new NextResponse(new Uint8Array(result.buffer), {
-    status: 200,
-    headers: {
-      'Content-Type': 'image/png',
-      'Cache-Control': 'public, max-age=604800, immutable',
-      'X-Card-Source': result.source,
-      'X-Card-Provider': result.provider,
-      'X-Card-Enrichment': encodeURIComponent(result.enrichmentId || 'none'),
-      'X-Card-Variant': result.variantId,
-      'X-Card-Mode': mode,
-    },
-  });
+    return new NextResponse(new Uint8Array(result.buffer), {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=604800, immutable',
+        'X-Card-Source': result.source,
+        'X-Card-Provider': result.provider,
+        'X-Card-Enrichment': result.enrichmentId || 'none',
+        'X-Card-Variant': result.variantId,
+        'X-Card-Mode': mode,
+      },
+    });
+  } catch (err) {
+    console.error('[card] pipeline threw:', err);
+    return redirectToFallback(request, address);
+  }
 }
 
 // Never cache the fallback — a 302 that browsers hang onto would trap the user
