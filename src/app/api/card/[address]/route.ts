@@ -53,7 +53,7 @@ export async function GET(
       'Cache-Control': 'public, max-age=604800, immutable',
       'X-Card-Source': result.source,
       'X-Card-Provider': result.provider,
-      'X-Card-Enrichment': result.enrichmentId || 'none',
+      'X-Card-Enrichment': encodeURIComponent(result.enrichmentId || 'none'),
       'X-Card-Variant': result.variantId,
       'X-Card-Mode': mode,
     },
