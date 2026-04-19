@@ -74,16 +74,16 @@ function buildTextSvg(report: FullReport): string {
     </g>
 
     <!-- Personality name — bottom-left -->
-    <g transform="translate(40, ${OUT_H - 130})">
-      <text font-family="Inter" font-weight="400" font-size="128" letter-spacing="5" fill="#ffffff">${personality}</text>
+    <g transform="translate(40, ${OUT_H - 90})">
+      <text font-family="Inter" font-weight="400" font-size="64" letter-spacing="3" fill="#ffffff">${personality}</text>
     </g>
 
     <!-- Stats row -->
     <g transform="translate(40, ${OUT_H - 50})">
-      <text font-family="JetBrains Mono" font-weight="400" font-size="52" letter-spacing="1" fill="#ffffff">
+      <text font-family="JetBrains Mono" font-weight="400" font-size="26" letter-spacing="1" fill="#ffffff">
         <tspan fill="${accent}">${txs}</tspan> TX
-        <tspan dx="22" fill="${accent}">${days}</tspan> DAYS
-        <tspan dx="22" fill="${accent}">${vol}</tspan> SOL
+        <tspan dx="12" fill="${accent}">${days}</tspan> DAYS
+        <tspan dx="12" fill="${accent}">${vol}</tspan> SOL
       </text>
     </g>
 
