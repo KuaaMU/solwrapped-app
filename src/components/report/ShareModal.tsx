@@ -254,6 +254,7 @@ export function ShareModal({
                     pointerEvents: tab === "ai" ? "auto" : "none",
                   }}
                   onLoad={() => markLoaded("ai", variantIdx)}
+                  onError={() => markLoaded("ai", variantIdx)}
                 />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -266,6 +267,7 @@ export function ShareModal({
                     pointerEvents: tab === "standard" ? "auto" : "none",
                   }}
                   onLoad={() => markLoaded("standard", 0)}
+                  onError={() => markLoaded("standard", 0)}
                 />
               </div>
             </div>

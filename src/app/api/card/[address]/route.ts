@@ -35,7 +35,13 @@ export async function GET(
     return redirectToFallback(request, address);
   }
 
-  const result = await generateAICard(report, { mode, variantIdx });
+  let result;
+  try {
+    result = await generateAICard(report, { mode, variantIdx });
+  } catch (err) {
+    console.error('[card] generateAICard threw:', err);
+    return redirectToFallback(request, address);
+  }
   if (!result) {
     return redirectToFallback(request, address);
   }

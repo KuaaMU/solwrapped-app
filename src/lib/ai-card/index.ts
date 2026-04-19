@@ -76,6 +76,7 @@ export async function generateAICard(
     const bg = await generateBackground(prompt, address);
     if (!bg) return null;
     const card = await composeCard(bg.buffer, report);
+    if (!card) return null;
     return { card, provider: bg.provider };
   });
 

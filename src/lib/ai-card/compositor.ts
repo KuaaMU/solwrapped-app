@@ -113,46 +113,52 @@ function buildTextSvg(report: FullReport): string {
 
 /**
  * Composite an AI background with the parametric logo watermark + text overlay.
- * Returns a 1200x630 PNG buffer.
+ * Returns a 1200x630 PNG buffer, or null if any stage fails (caller falls back
+ * to the Satori OG card).
  */
 export async function composeCard(
   background: Buffer,
   report: FullReport
-): Promise<Buffer> {
-  // 1. Prep background: resize to 1200x630 (cover), slight darkening
-  const bg = await sharp(background)
-    .resize(OUT_W, OUT_H, { fit: 'cover', position: 'attention' })
-    .modulate({ brightness: 0.88, saturation: 1.05 })
-    .png()
-    .toBuffer();
+): Promise<Buffer | null> {
+  try {
+    // 1. Prep background: resize to 1200x630 (cover), slight darkening
+    const bg = await sharp(background)
+      .resize(OUT_W, OUT_H, { fit: 'cover', position: 'attention' })
+      .modulate({ brightness: 0.88, saturation: 1.05 })
+      .png()
+      .toBuffer();
 
-  // 2. Parametric logo watermark (140x140, top-left) — pure paths, no text
-  const logoSvg = generateLogo({
-    ...profileToLogoParams(report.profile),
-    showText: false,
-  });
-  const logoSize = 140;
-  const logo = await sharp(Buffer.from(logoSvg))
-    .resize(logoSize, logoSize)
-    .png()
-    .toBuffer();
+    // 2. Parametric logo watermark (140x140, top-left) — pure paths, no text
+    const logoSvg = generateLogo({
+      ...profileToLogoParams(report.profile),
+      showText: false,
+    });
+    const logoSize = 140;
+    const logo = await sharp(Buffer.from(logoSvg))
+      .resize(logoSize, logoSize)
+      .png()
+      .toBuffer();
 
-  // 3. Rasterize text SVG through resvg with explicit font files
-  const textPng = new Resvg(buildTextSvg(report), {
-    font: { fontFiles: FONT_FILES, loadSystemFonts: false },
-    fitTo: { mode: 'original' },
-  })
-    .render()
-    .asPng();
+    // 3. Rasterize text SVG through resvg with explicit font files
+    const textPng = new Resvg(buildTextSvg(report), {
+      font: { fontFiles: FONT_FILES, loadSystemFonts: false },
+      fitTo: { mode: 'original' },
+    })
+      .render()
+      .asPng();
 
-  // 4. Composite: bg → gradient overlay (SVG, no text) → logo → text
-  const overlay = Buffer.from(buildOverlaySvg());
-  return sharp(bg)
-    .composite([
-      { input: overlay, top: 0, left: 0 },
-      { input: logo, top: 30, left: 30 },
-      { input: textPng, top: 0, left: 0 },
-    ])
-    .png({ compressionLevel: 8 })
-    .toBuffer();
+    // 4. Composite: bg → gradient overlay (SVG, no text) → logo → text
+    const overlay = Buffer.from(buildOverlaySvg());
+    return sharp(bg)
+      .composite([
+        { input: overlay, top: 0, left: 0 },
+        { input: logo, top: 30, left: 30 },
+        { input: textPng, top: 0, left: 0 },
+      ])
+      .png({ compressionLevel: 8 })
+      .toBuffer();
+  } catch (err) {
+    console.error('[compositor] composeCard failed:', err);
+    return null;
+  }
 }
