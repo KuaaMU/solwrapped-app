@@ -95,7 +95,6 @@ export async function GET(
             alignItems: 'center',
             justifyContent: 'center',
             position: 'relative',
-            zIndex: 1,
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -117,7 +116,6 @@ export async function GET(
             padding: '50px 60px 50px 20px',
             justifyContent: 'space-between',
             position: 'relative',
-            zIndex: 1,
           }}
         >
           {/* Header row */}
@@ -227,7 +225,7 @@ export async function GET(
             <Stat label="TXS" value={totalTxs.toLocaleString()} />
             <Stat label="DAYS" value={String(activeDays)} />
             <Stat label="PROTO" value={String(protocols)} />
-            <Stat label="VOLUME" value={`${volume}◎`} accent />
+            <Stat label="VOLUME" value={`${volume} SOL`} accent />
           </div>
 
           {/* Footer */}
