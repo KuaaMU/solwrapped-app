@@ -54,9 +54,12 @@ export function ShareModal({
   const aiUrl = `${aiUrlBase}?${aiQuery}`;
   const activeUrl = tab === "ai" ? aiUrl : standardUrl;
 
+  // Share URL carries the same query params so the /report OG tags point at
+  // the variant the user is looking at — X / Telegram show a matching preview.
+  const shareQuery = tab === 'ai' ? `?${aiQuery}` : (mode !== 'on' ? `?mode=${mode}` : '');
   const shareUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/report/${address}`
-    : `/report/${address}`;
+    ? `${window.location.origin}/report/${address}${shareQuery}`
+    : `/report/${address}${shareQuery}`;
 
   const tweetText = useMemo(() => {
     const goldBadge = badges.find((b) => b.rarity === "gold");

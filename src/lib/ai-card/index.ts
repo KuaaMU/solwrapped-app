@@ -1,9 +1,6 @@
 // AI card pipeline entry point.
 // Orchestrates: art brief (LLM, with enrichment registry + style variant) →
 // Volcengine 即梦 4.0 image → sharp composition → cached PNG.
-//
-// fal.ai remains on disk (`./fal.ts`) as a dormant fallback but is not wired
-// into the active chain; the user's fal.ai account has zero balance.
 
 import type { FullReport } from '../types';
 import { buildArtBrief, resolveEnrichmentIdFor, resolveVariantIdFor } from './prompt';

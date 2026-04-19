@@ -1,12 +1,35 @@
 // Sharp composition pipeline — AI background + dark gradient + parametric logo + text overlay.
 // Output: 1200x630 PNG suitable for OG card.
+//
+// Text is rasterized via @resvg/resvg-js (not sharp/librsvg) because librsvg's
+// @font-face data-URI support is unreliable on Vercel's Linux runtime —
+// unembedded system fonts resolve to .notdef (tofu squares). resvg-js takes
+// explicit font buffers, bypassing fontconfig entirely.
 
 import sharp from 'sharp';
+import { Resvg } from '@resvg/resvg-js';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { generateLogo, profileToLogoParams } from '../logo-svg';
 import type { FullReport } from '../types';
 
 const OUT_W = 1200;
 const OUT_H = 630;
+
+// Resolve font file paths that Next.js file tracing will bundle. The
+// fs.readFileSync call is the trace signal; the resolved string is what resvg
+// expects (v2 takes file paths, not buffers).
+function fontFilePath(file: string): string {
+  const url = new URL(`./fonts/${file}`, import.meta.url);
+  fs.readFileSync(url);
+  return fileURLToPath(url);
+}
+
+const FONT_FILES = [
+  fontFilePath('Inter-Regular.ttf'),
+  fontFilePath('Inter-Light.ttf'),
+  fontFilePath('JetBrainsMono-Regular.ttf'),
+];
 
 // Bottom darkening gradient + subtle top vignette for text legibility.
 function buildOverlaySvg(): string {
@@ -45,13 +68,13 @@ function buildTextSvg(report: FullReport): string {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${OUT_W}" height="${OUT_H}">
     <style>
-      .brand { font: 300 20px 'Helvetica Neue', Helvetica, Arial, sans-serif; letter-spacing: 6px; fill: #e0e0e0; }
-      .brand-sub { font: 400 11px 'SF Mono', 'Fira Code', monospace; letter-spacing: 4px; fill: #777; }
-      .personality { font: 200 56px 'Helvetica Neue', Helvetica, Arial, sans-serif; letter-spacing: 6px; fill: #f5f5f5; }
-      .stats { font: 400 20px 'SF Mono', 'Fira Code', 'Courier New', monospace; letter-spacing: 3px; fill: #aaa; }
-      .addr { font: 400 14px 'SF Mono', monospace; letter-spacing: 2px; fill: #888; }
+      .brand { font: 300 20px 'Inter'; letter-spacing: 6px; fill: #e0e0e0; }
+      .brand-sub { font: 400 11px 'JetBrains Mono'; letter-spacing: 4px; fill: #777; }
+      .personality { font: 300 96px 'Inter'; letter-spacing: 7px; fill: #f5f5f5; }
+      .stats { font: 400 20px 'JetBrains Mono'; letter-spacing: 3px; fill: #aaa; }
+      .addr { font: 400 14px 'JetBrains Mono'; letter-spacing: 2px; fill: #888; }
       .accent { fill: ${accent}; }
-      .chip-text { font: 500 12px 'SF Mono', monospace; letter-spacing: 3px; fill: #050505; }
+      .chip-text { font: 400 12px 'JetBrains Mono'; letter-spacing: 3px; fill: #050505; }
     </style>
 
     <!-- Brand wordmark — below top-left logo -->
@@ -103,7 +126,7 @@ export async function composeCard(
     .png()
     .toBuffer();
 
-  // 2. Parametric logo watermark (140x140, top-left)
+  // 2. Parametric logo watermark (140x140, top-left) — pure paths, no text
   const logoSvg = generateLogo({
     ...profileToLogoParams(report.profile),
     showText: false,
@@ -114,16 +137,21 @@ export async function composeCard(
     .png()
     .toBuffer();
 
-  // 3. Gradient overlay + text layers
-  const overlay = Buffer.from(buildOverlaySvg());
-  const text = Buffer.from(buildTextSvg(report));
+  // 3. Rasterize text SVG through resvg with explicit font files
+  const textPng = new Resvg(buildTextSvg(report), {
+    font: { fontFiles: FONT_FILES, loadSystemFonts: false },
+    fitTo: { mode: 'original' },
+  })
+    .render()
+    .asPng();
 
-  // 4. Composite: bg → overlay → logo → text
+  // 4. Composite: bg → gradient overlay (SVG, no text) → logo → text
+  const overlay = Buffer.from(buildOverlaySvg());
   return sharp(bg)
     .composite([
       { input: overlay, top: 0, left: 0 },
       { input: logo, top: 30, left: 30 },
-      { input: text, top: 0, left: 0 },
+      { input: textPng, top: 0, left: 0 },
     ])
     .png({ compressionLevel: 8 })
     .toBuffer();

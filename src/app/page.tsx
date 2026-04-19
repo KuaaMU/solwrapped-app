@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Logo } from "@/components/Logo";
+import { SocialLinks } from "@/components/SocialLinks";
 import { validateAddress } from "@/lib/address";
 
 type GenMode = "on" | "festival-only" | "off";
@@ -247,12 +248,15 @@ export default function Home() {
           </motion.div>
 
           {/* Footer */}
-          <div className="flex items-center gap-3 text-[var(--text-disabled)] text-[10px] font-mono uppercase tracking-[0.3em] pt-4">
-            <span>COLOSSEUM FRONTIER 2026</span>
-            <span>·</span>
-            <span>HELIUS</span>
-            <span>·</span>
-            <span>CLAUDE</span>
+          <div className="flex flex-col items-center gap-3 pt-4">
+            <div className="flex items-center gap-3 text-[var(--text-disabled)] text-[10px] font-mono uppercase tracking-[0.3em]">
+              <span>COLOSSEUM FRONTIER 2026</span>
+              <span>·</span>
+              <span>HELIUS</span>
+              <span>·</span>
+              <span>CLAUDE</span>
+            </div>
+            <SocialLinks />
           </div>
         </div>
       </main>

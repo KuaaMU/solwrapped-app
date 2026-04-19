@@ -6,11 +6,21 @@
 
 ### Your wallet tells a story. AI reads the chain.
 
-**SolWrapped** scans any Solana address, classifies every transaction, and generates a personality report — wrapped in a data-driven logo fingerprint that's visually unique to each wallet.
+**SolWrapped** scans any Solana address, classifies every transaction, and generates a personality report wrapped in two share-ready artifacts:
 
-[Demo Wallets](#demo-wallets) · [Visual Language](#visual-language) · [Architecture](#architecture) · [Getting Started](#getting-started)
+- A deterministic **parametric Logo SVG** — a visual fingerprint unique to each wallet's tx pattern
+- A data-driven **AI card** — a 1200×630 generative-art OG image that refreshes daily with season, festival, and solar-term context
+
+[Live Demo](https://solwrapped-app.vercel.app) · [Demo Wallets](#demo-wallets) · [AI Card Pipeline](#ai-card-pipeline) · [Sponsorship](#sponsorship--partnership) · [Getting Started](#getting-started)
 
 *Built for Colosseum Frontier 2026*
+
+<p>
+  <a href="https://github.com/KuaaMU/solwrapped-app"><img src="https://img.shields.io/badge/GitHub-KuaaMU%2Fsolwrapped--app-181717?logo=github" alt="GitHub"/></a>
+  <a href="https://x.com/X_SwarmMind"><img src="https://img.shields.io/badge/X-%40X__SwarmMind-000000?logo=x" alt="X"/></a>
+  <img src="https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs" alt="Next.js 16"/>
+  <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT"/>
+</p>
 
 </div>
 
@@ -23,26 +33,63 @@ Paste any Solana address. In seconds, SolWrapped:
 1. **Fetches** full transaction history via Helius Enhanced API
 2. **Classifies** every tx — swaps, transfers, NFTs, staking, protocol usage
 3. **Analyzes** behavioral patterns — peak hours, frequency, weekday ratios
-4. **Generates** an AI personality profile (witty, data-driven)
+4. **Generates** an AI personality via OpenRouter (swappable provider)
 5. **Paints** a parametric Logo — your on-chain fingerprint, no two alike
 6. **Awards** achievement badges (bronze / silver / gold rarity)
-7. **Themes** the report with a subtle personality accent
-8. **Renders** a shareable OG image for Twitter / social previews
+7. **Composes** a shareable AI card via Volcengine 即梦 4.0 — generative background + wallet stats overlay
+8. **Decorates** the card with time-aware context — seasons, solar terms, festivals (CN lunar + Western)
+
+## AI Card Pipeline
+
+The AI share card is the showpiece — a fresh 1200×630 PNG per wallet, with a gacha-like variant picker inside the share modal:
+
+```
+┌────────────────────┐   ┌────────────────────┐   ┌───────────────┐
+│  Wallet profile +  │ → │ OpenRouter LLM     │ → │ Art brief     │
+│  enrichment ctx    │   │ (elephant-alpha)   │   │ (text prompt) │
+└────────────────────┘   └────────────────────┘   └───────┬───────┘
+                                                          ▼
+         ┌──────────────────────────────────────────────────────┐
+         │ Volcengine 即梦 4.0 (jimeng_t2i_v40) — 2560×1440 art │
+         └────────────────────────┬─────────────────────────────┘
+                                  ▼
+         ┌──────────────────────────────────────────────────────┐
+         │ sharp (bg resize) + resvg (text via TTF) → composite │
+         │   bg → gradient vignette → parametric logo → text    │
+         └────────────────────────┬─────────────────────────────┘
+                                  ▼
+                          1200×630 PNG (cached)
+```
+
+### Time-Aware Enrichments
+
+Cards pick up a single contextual layer at generation time — no layering conflicts:
+
+| Priority | Layer | Intensity | Examples |
+|---------|-------|-----------|----------|
+| 90 | **Wallet anniversary** | primary | first-tx week each year |
+| 80 | **Festivals** | primary | Spring Festival, Mid-Autumn, Halloween, Qingming (taboo-aware) |
+| 60 | **Solar terms** | accent / primary | 24 terms; Qingming treated as primary due to mourning cues |
+| 20 | **Seasons** | accent | cherry-blossom pigment (spring), heat-shimmer plasma (summer), copper leaf-shards (autumn), crystalline frost (winter) |
+
+User controls via a 3-state toggle: **SEASONAL** (all layers) · **FESTIVAL** (festival + anniversary only) · **OFF** (pure archetype).
+
+### Variant Picker (Gacha)
+
+Every theme has 4 distinct visual interpretations (e.g. `CHAOS` / `GRID` / `MELT` / `PULSE`). Users draw slots one-by-one inside the share modal — drawn variants cache and swap instantly; undrawn slots trigger fresh generation. Keeps novelty high without burning provider quota.
 
 ## Visual Language
 
-The entire design is anchored to a single aesthetic:
-
 - **Base**: deep black `#050505 → #0a0a0a`
-- **Channels**: Solana purple `#9945FF` and teal `#14F195`, offset ±5px to create the signature RGB-shift "data distortion"
-- **Typography**: Helvetica Neue Ultra Light + mono for data
+- **Channels**: Solana purple `#9945FF` and teal `#14F195`, offset ±5px for RGB-shift "data distortion"
+- **Typography**: Inter (UI), JetBrains Mono (data) — bundled in-repo as TTF for deterministic render
 - **Texture**: scan lines, topographic contour borders, subtle dashed rings
 
-Personality themes are **accent tints** — they subtly color glows and highlights on top of the shared dark base, never dominating it. This keeps every wallet visually coherent while still feeling personal.
+Personality themes are **accent tints** — they subtly color glows and highlights on top of the shared dark base, never dominating it.
 
 ## The Parametric Logo
 
-Every wallet gets a **unique** logo SVG — not just themed, but procedurally generated from on-chain data. The logo is composed of three RGB-shifted channels (purple / teal / white) with an iris + pupil eye that tracks your cursor on the landing page.
+Every wallet gets a **unique** logo SVG — procedurally generated from on-chain data, not just themed.
 
 | Logo element | Driven by | Visual effect |
 |--------------|-----------|----------------|
@@ -53,13 +100,9 @@ Every wallet gets a **unique** logo SVG — not just themed, but procedurally ge
 | Top-right corner glow | `peakHour` (0-5 UTC) | Night owls → stronger "unwrap" glow |
 | Accent tint | Personality theme | Subtle color wash over top-right quadrant |
 
-Every address produces a deterministic, reproducible fingerprint — the seed is an FNV-1a hash of the address, so the same wallet always renders the same logo.
-
-On the landing page the logo is **interactive** — iris and pupil track the cursor at different magnitudes (0.4× vs 1.0×), so the pupil rolls inside the iris.
+Deterministic — the seed is an FNV-1a hash of the address. Same wallet always renders the same logo. On the landing page the logo is **interactive** — iris and pupil track the cursor independently (pupil 1.0×, iris 0.4×) so the pupil rolls inside the iris.
 
 ## Personality Archetypes
-
-The AI picks one of six archetypes based on your on-chain behavior. Each archetype maps to a subtle accent that tints the report's glows and highlights:
 
 | Archetype | Accent | Who Gets It |
 |-----------|--------|-------------|
@@ -72,12 +115,6 @@ The AI picks one of six archetypes based on your on-chain behavior. Each archety
 
 ## Badges
 
-Each wallet unlocks achievements. Rarity colors map directly to the design system:
-
-- **Bronze** — white `#e0e0e0`, baseline milestone
-- **Silver** — Solana purple `#9945FF`, notable achievement
-- **Gold** — Solana teal `#14F195`, elite tier
-
 | Badge | Bronze | Silver | Gold |
 |-------|--------|--------|------|
 | **TRADER** | 100+ tx | 1,000+ tx | 5,000+ tx |
@@ -88,38 +125,9 @@ Each wallet unlocks achievements. Rarity colors map directly to the design syste
 | **PUMP** | — | 10+ Pump.fun tx | — |
 | **FRONTIER 26** | — | — | Generated during Colosseum 2026 window |
 
-## Screenshots
-
-<table>
-<tr>
-<td align="center" colspan="3"><strong>Landing</strong> — interactive logo tracks cursor</td>
-</tr>
-<tr>
-<td colspan="3"><img src="docs/screenshots/hero.png" alt="Landing page" width="100%"/></td>
-</tr>
-<tr>
-<td align="center"><strong>MIDNIGHT DEGEN</strong></td>
-<td align="center"><strong>YIELD MONK</strong></td>
-<td align="center"><strong>PIXEL HUNTER</strong></td>
-</tr>
-<tr>
-<td><img src="docs/screenshots/report-degen.png" width="280"/></td>
-<td><img src="docs/screenshots/report-farmer.png" width="280"/></td>
-<td><img src="docs/screenshots/report-collector.png" width="280"/></td>
-</tr>
-</table>
-
-**OG share card** (auto-generated per wallet, themed subtly):
-
-<p>
-<img src="docs/screenshots/og-degen.png" width="32%"/>
-<img src="docs/screenshots/og-farmer.png" width="32%"/>
-<img src="docs/screenshots/og-collector.png" width="32%"/>
-</p>
-
 ## Demo Wallets
 
-Try these instantly — no API key required:
+No API keys required:
 
 | Input | Personality | Accent |
 |-------|-------------|--------|
@@ -127,82 +135,36 @@ Try these instantly — no API key required:
 | `demo-farmer` | `YIELD MONK` | Gold |
 | `demo-collector` | `PIXEL HUNTER` | Violet |
 
-## Architecture
-
-```
-                ┌─────────────┐
-                │   Browser    │
-                │  (Next.js)   │
-                └──────┬───────┘
-                       │
-          ┌────────────┼────────────┐
-          ▼            ▼            ▼
-   ┌─────────┐  ┌──────────┐  ┌─────────────┐
-   │ /report  │  │ /api/og  │  │ /api/analyze │
-   │  (page)  │  │ (image)  │  │   (engine)   │
-   └────┬─────┘  └────┬─────┘  └──────┬──────┘
-        │              │                │
-        │         ┌────┴─────┐   ┌──────┴────┐
-        │         │ logo-svg │   │ helius.ts  │ ← Helius Enhanced API
-        │         │ themes   │   └──────┬────┘
-        │         │ badges   │          │
-        │         └──────────┘   ┌──────┴────┐
-        │                        │analyzer.ts │ ← Tx classify + profile
-        │                        └──────┬────┘
-        │                               │
-        │                        ┌──────┴────┐
-        │                        │   ai.ts   │ ← Claude API (personality)
-        │                        └──────┬────┘
-        │                               │
-        └───────────────┬───────────────┘
-                        ▼
-                 ┌─────────────┐
-                 │  cache.ts    │ ← In-memory TTL cache
-                 └─────────────┘
-```
-
-### Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 16 (App Router, Turbopack) |
-| UI | Tailwind CSS 4, Framer Motion 12 |
-| Blockchain Data | Helius Enhanced Transactions API |
-| AI | Claude (Anthropic API) |
-| OG Images | `next/og` (Edge Runtime, Satori) |
+| Framework | [Next.js 16](https://nextjs.org) (App Router, Turbopack, Fluid Compute) |
+| UI | [Tailwind CSS 4](https://tailwindcss.com), [Framer Motion 12](https://www.framer.com/motion/) |
+| Blockchain Data | [Helius Enhanced Transactions API](https://www.helius.dev) |
+| LLM (personality + art brief) | [OpenRouter](https://openrouter.ai) — model-agnostic gateway, default `elephant-alpha` |
+| Image Generation | [Volcengine 即梦 4.0](https://www.volcengine.com/docs/6791/1399614) (`jimeng_t2i_v40`) |
+| Compositor | [sharp](https://sharp.pixelplumbing.com) + [@resvg/resvg-js](https://github.com/yisibl/resvg-js) |
+| OG Fallback | `next/og` (Satori) |
+| Calendar | [lunar-javascript](https://github.com/6tail/lunar-javascript) (CN lunar + 24 solar terms) |
+| Hosting | [Vercel](https://vercel.com) (Fluid Compute, 300s default function timeout) |
 | Language | TypeScript (strict) |
 
-### Key Files
+## Sponsorship & Partnership
 
-```
-src/
-├── lib/
-│   ├── types.ts        # Core types (Badge, Theme, Profile, Report)
-│   ├── helius.ts       # Helius API client (paginated fetch)
-│   ├── analyzer.ts     # Transaction classifier + profiler
-│   ├── ai.ts           # Claude prompt + response parser
-│   ├── themes.ts       # 6-accent subtle-tint design system
-│   ├── logo-svg.ts     # Parametric Logo SVG generator (data-driven)
-│   ├── badges.ts       # Achievements + rarity logic
-│   ├── cache.ts        # In-memory TTL cache
-│   └── demo-data.ts    # 3 demo wallet profiles
-├── components/
-│   └── Logo.tsx        # React wrapper — reactive eye-tracking
-├── app/
-│   ├── page.tsx        # Landing (interactive logo hero)
-│   ├── report/[address]/
-│   │   ├── page.tsx    # Themed report + animations
-│   │   └── layout.tsx  # Dynamic OG meta tags
-│   └── api/
-│       ├── analyze/    # Full pipeline endpoint
-│       └── og/         # Dynamic OG image generation
-```
+SolWrapped is a public, open-source hackathon project with organic Solana community reach. If your product serves crypto creators, wallet users, or AI developers, here's how the card + share loop surfaces brand value:
+
+- **Every AI card generation** pings an image-gen provider (currently **Volcengine 即梦 4.0**) and an LLM gateway (currently **OpenRouter** routing to `elephant-alpha`). Each generation is a live demo of the stack behind it.
+- **Every share** is a fresh 1200×630 artifact on X or Telegram. OG previews carry the actual AI card for the user's variant — native social shareability, no screenshot editing.
+- **Open attribution spots**: footer badge, ShareModal bottom strip, or art-brief prompt credit line — all low-friction to add.
+
+If you'd like to slot your provider, wallet, or protocol into the pipeline (model swap, image backend, wallet adapter integration, or commemorative badge sponsorship), open an issue or reach out via [X/@X_SwarmMind](https://x.com/X_SwarmMind).
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - pnpm
 
 ### Install
@@ -218,11 +180,26 @@ pnpm install
 Create `.env.local`:
 
 ```env
-HELIUS_API_KEY=your_helius_key    # Required for real wallets
-ANTHROPIC_API_KEY=your_claude_key  # Required for AI personality
+# Required for real wallets (demo-* addresses skip this)
+HELIUS_API_KEY=your_helius_key
+
+# LLM — OpenRouter is the default; point LLM_PROVIDER at any provider in lib/ai.ts
+OPENROUTER_API_KEY=sk-or-v1-...
+LLM_PROVIDER=openrouter
+LLM_MODEL=openrouter/elephant-alpha
+
+# Image generation (optional; card falls back to Satori OG if unset)
+VOLC_ACCESS_KEY_ID=...
+VOLC_SECRET_ACCESS_KEY=...
+
+# Optional: tune Volcengine concurrency (defaults to 1 for free-tier quota)
+CARD_VOLC_CONCURRENCY=1
+
+# Optional: absolute URL for OG metadata
+NEXT_PUBLIC_SITE_URL=https://your-domain.app
 ```
 
-> Demo wallets work without any API keys.
+> Demo wallets (`demo-degen` / `demo-farmer` / `demo-collector`) work without any API keys.
 
 ### Run
 
@@ -230,7 +207,7 @@ ANTHROPIC_API_KEY=your_claude_key  # Required for AI personality
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Try `demo-degen` to see it in action.
+Open [http://localhost:3000](http://localhost:3000). Try `demo-degen` to see the full pipeline.
 
 ### Build
 
@@ -238,57 +215,72 @@ Open [http://localhost:3000](http://localhost:3000). Try `demo-degen` to see it 
 pnpm build && pnpm start
 ```
 
-## How the AI Works
+### Deploy to Vercel
 
-The analyzer builds a behavioral profile from raw transactions:
-
-```json
-{
-  "totalTxs": 4287,
-  "swaps": 3102,
-  "peakHour": 3,
-  "weekdayRatio": 0.48,
-  "topProtocols": [["Jupiter", 1820], ["Raydium", 680]],
-  "uniqueTokens": 284
-}
+```bash
+vercel link      # link to Vercel project
+vercel env add   # push each .env.local key
+vercel --prod    # deploy
 ```
 
-Claude receives this data and returns a personality:
+## Key Files
 
-```json
-{
-  "personality": "MIDNIGHT DEGEN",
-  "personalityEmoji": "🌙",
-  "themeId": "orange",
-  "insights": [
-    "You averaged 13.7 transactions per day — more active than 97% of wallets.",
-    "Your peak trading hour is 03:00 UTC. Late-night degen sessions.",
-    "You burned 2.847 SOL in fees alone."
-  ],
-  "recommendation": "Set a 1AM trading curfew."
-}
 ```
-
-The same profile also drives the parametric logo parameters — vitality (from `totalTxs`), frequency, diversity, chaos, nocturne — so the visual fingerprint is consistent with the written personality.
+src/
+├── lib/
+│   ├── types.ts               # Core types (Badge, Theme, Profile, Report)
+│   ├── helius.ts              # Helius API client (paginated fetch)
+│   ├── analyzer.ts            # Transaction classifier + profiler
+│   ├── ai.ts                  # LLM provider abstraction (OpenRouter default)
+│   ├── themes.ts              # 6-accent subtle-tint design system
+│   ├── logo-svg.ts            # Parametric Logo SVG generator (data-driven)
+│   ├── badges.ts              # Achievements + rarity logic
+│   ├── cache.ts               # In-memory TTL report cache
+│   ├── demo-data.ts           # 3 demo wallet profiles
+│   └── ai-card/
+│       ├── index.ts           # Pipeline entry point
+│       ├── prompt.ts          # Art brief composition (intensity-routed)
+│       ├── variants.ts        # 4 style variants × 6 themes = 24 combos
+│       ├── volcengine.ts      # 即梦 4.0 submit/poll with semaphore
+│       ├── volcengine-sign.ts # Volcengine signature v4
+│       ├── compositor.ts      # Sharp + resvg composition
+│       ├── cache.ts           # Per-variant PNG cache (TTL matches enrichment)
+│       ├── enrichments/       # Registry: festivals + solar terms + seasons + wallet events
+│       └── fonts/             # Inter + JetBrains Mono TTFs
+├── components/
+│   ├── Logo.tsx               # React wrapper — reactive eye-tracking
+│   ├── SocialLinks.tsx        # GitHub + X icons
+│   └── report/                # Report page atoms + ShareModal
+└── app/
+    ├── page.tsx               # Landing (interactive logo hero + mode toggle)
+    ├── report/[address]/
+    │   ├── page.tsx           # Server shell — generateMetadata (OG tags)
+    │   └── ReportClient.tsx   # Themed report + share modal launcher
+    └── api/
+        ├── analyze/           # Full pipeline: Helius → analyzer → LLM
+        ├── card/              # AI card (Volcengine → sharp/resvg composite)
+        └── og/                # Satori OG fallback
+```
 
 ## Roadmap
 
-- [x] Helius transaction fetching + classification
-- [x] Claude AI personality generation
+- [x] Helius tx fetching + classification
+- [x] LLM provider abstraction (OpenRouter default, swappable)
 - [x] 6-archetype subtle-accent design system
+- [x] Parametric data-driven Logo SVG + interactive eye-tracking
 - [x] Framer Motion animated report page
-- [x] Dynamic OG image generation (themed)
-- [x] Twitter / X share integration
-- [x] Parametric data-driven Logo SVG
-- [x] Interactive eye-tracking (iris + pupil independent motion)
+- [x] Dynamic OG image generation (Satori fallback + AI card)
+- [x] Volcengine 即梦 4.0 generative card pipeline
+- [x] 4-variant gacha picker per theme
+- [x] Time-aware enrichment registry (festivals / solar terms / seasons / anniversaries)
 - [x] Badge / achievement system (bronze / silver / gold)
-- [x] Frontier 2026 commemorative badge (hackathon window)
-- [ ] LLM provider abstraction (OpenAI / DeepSeek / OpenRouter / Gemini)
-- [ ] fal.ai abstract-art share card pipeline
-- [ ] Share modal polish (copy image, download)
+- [x] Frontier 2026 commemorative badge
+- [x] Mobile-responsive share modal
+- [x] Vercel deployment + production OG metadata
 - [ ] Wallet adapter connect flow
-- [ ] Farcaster Frames support
 - [ ] Historical comparison (month-over-month)
+- [ ] Farcaster Frames support
+- [ ] Leaderboard — most-unwrapped wallets
 
 ## License
 
@@ -297,5 +289,7 @@ MIT
 ---
 
 <div align="center">
-<sub>Built with Helius, Claude, and too much caffeine for Colosseum Frontier 2026</sub>
+<sub>Built with Helius, OpenRouter, and Volcengine 即梦 4.0 for Colosseum Frontier 2026</sub>
+<br/>
+<a href="https://github.com/KuaaMU/solwrapped-app">GitHub</a> · <a href="https://x.com/X_SwarmMind">X @X_SwarmMind</a>
 </div>

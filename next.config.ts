@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // sharp is a native image module and must not be bundled by the server
-  serverExternalPackages: ["sharp"],
+  // Native modules must not be bundled by the server.
+  serverExternalPackages: ["sharp", "@resvg/resvg-js"],
 };
 
 export default nextConfig;

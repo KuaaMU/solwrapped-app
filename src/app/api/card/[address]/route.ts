@@ -1,16 +1,11 @@
 // /api/card/[address] — Node runtime. Returns the AI card as PNG.
-// Falls back to the Satori OG card on missing deps/key or upstream failure,
-// and (when CARD_TIMEOUT_MS is set) on a soft-timeout so Vercel Hobby's 10s
-// function cap doesn't return a 504 to the client.
+// Falls back to the Satori OG card (/api/og/[address]) on missing report or
+// upstream generation failure. Volcengine 即梦 4.0 averages ~20s end-to-end;
+// we rely on Vercel's function timeout (maxDuration below) to bound waits.
 //
 // Query params:
 //   mode = on | festival-only | off
 //   v    = 0-3 (style variant index; default = address-hashed)
-//
-// Env:
-//   CARD_TIMEOUT_MS — milliseconds before we surrender to the Satori fallback.
-//     Unset / 0 → no timeout (local dev, Fly.io, Vercel Pro).
-//     8500       → recommended for Vercel Hobby (10s function cap).
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCachedReport } from '@/lib/cache';
@@ -22,15 +17,6 @@ import { normalizeVariantIdx } from '@/lib/ai-card/variants';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
-
-function softTimeoutMs(): number {
-  const raw = parseInt(process.env.CARD_TIMEOUT_MS ?? '', 10);
-  return Number.isFinite(raw) && raw > 0 ? raw : 0;
-}
-
-function timeoutTag(ms: number): Promise<null> {
-  return new Promise((resolve) => setTimeout(() => resolve(null), ms));
-}
 
 export async function GET(
   request: NextRequest,
@@ -46,18 +32,12 @@ export async function GET(
 
   const report = getDemoReport(address) ?? getCachedReport(address);
   if (!report) {
-    return NextResponse.redirect(new URL(`/api/og/${address}`, request.url), 302);
+    return redirectToFallback(request, address);
   }
 
-  const timeout = softTimeoutMs();
-  const generation = generateAICard(report, { mode, variantIdx });
-  const result =
-    timeout > 0
-      ? await Promise.race([generation, timeoutTag(timeout)])
-      : await generation;
-
+  const result = await generateAICard(report, { mode, variantIdx });
   if (!result) {
-    return NextResponse.redirect(new URL(`/api/og/${address}`, request.url), 302);
+    return redirectToFallback(request, address);
   }
 
   return new NextResponse(new Uint8Array(result.buffer), {
@@ -71,5 +51,14 @@ export async function GET(
       'X-Card-Variant': result.variantId,
       'X-Card-Mode': mode,
     },
+  });
+}
+
+// Never cache the fallback — a 302 that browsers hang onto would trap the user
+// on the Satori OG even after Volcengine recovers.
+function redirectToFallback(request: NextRequest, address: string) {
+  return NextResponse.redirect(new URL(`/api/og/${address}`, request.url), {
+    status: 302,
+    headers: { 'Cache-Control': 'no-store, max-age=0' },
   });
 }

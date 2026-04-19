@@ -27,7 +27,7 @@ interface ProviderConfig {
 }
 
 const DEFAULT_MODELS: Record<LLMProvider, string> = {
-  anthropic: 'claude-sonnet-4-6-20250514',
+  anthropic: 'claude-sonnet-4-6',
   openai: 'gpt-4o-mini',
   openrouter: 'meta-llama/llama-3.3-70b-instruct',
   deepseek: 'deepseek-chat',
