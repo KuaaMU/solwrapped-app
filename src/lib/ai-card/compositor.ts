@@ -68,45 +68,45 @@ function buildTextSvg(report: FullReport): string {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${OUT_W}" height="${OUT_H}">
     <style>
-      .brand { font: 300 13px 'Inter'; letter-spacing: 4px; fill: #e0e0e0; }
-      .brand-sub { font: 400 10px 'JetBrains Mono'; letter-spacing: 3px; fill: #444; }
-      .personality { font: 300 52px 'Inter'; letter-spacing: 3px; fill: #e0e0e0; }
-      .stats { font: 300 28px 'JetBrains Mono'; letter-spacing: 0px; fill: #e0e0e0; }
-      .addr { font: 400 11px 'JetBrains Mono'; letter-spacing: 1px; fill: #666; }
+      .brand { font: 300 22px 'Inter'; letter-spacing: 5px; fill: #e0e0e0; }
+      .brand-sub { font: 400 13px 'JetBrains Mono'; letter-spacing: 3px; fill: #888; }
+      .personality { font: 300 78px 'Inter'; letter-spacing: 4px; fill: #f0f0f0; }
+      .stats { font: 400 34px 'JetBrains Mono'; letter-spacing: 1px; fill: #e0e0e0; }
+      .addr { font: 400 16px 'JetBrains Mono'; letter-spacing: 1px; fill: #888; }
       .accent { fill: ${accent}; }
-      .chip-text { font: 400 10px 'JetBrains Mono'; letter-spacing: 3px; fill: #050505; }
+      .chip-text { font: 400 13px 'JetBrains Mono'; letter-spacing: 3px; fill: #050505; }
     </style>
 
     <!-- Brand wordmark — below top-left logo -->
-    <g transform="translate(200, 72)">
+    <g transform="translate(200, 76)">
       <text class="brand">SolWrapped</text>
-      <text class="brand-sub" y="20">WALLET TELLS A STORY</text>
+      <text class="brand-sub" y="26">WALLET TELLS A STORY</text>
     </g>
 
     <!-- Personality name — bottom-left -->
-    <g transform="translate(40, ${OUT_H - 110})">
+    <g transform="translate(40, ${OUT_H - 120})">
       <text class="personality">${personality}</text>
     </g>
 
     <!-- Stats row -->
-    <g transform="translate(40, ${OUT_H - 62})">
+    <g transform="translate(40, ${OUT_H - 56})">
       <text class="stats">
         <tspan class="accent">${txs}</tspan> TX
-        <tspan dx="14" class="accent">${days}</tspan> DAYS
-        <tspan dx="14" class="accent">${vol}</tspan> SOL
+        <tspan dx="20" class="accent">${days}</tspan> DAYS
+        <tspan dx="20" class="accent">${vol}</tspan> SOL
       </text>
     </g>
 
     <!-- Address — bottom-right -->
-    <g transform="translate(${OUT_W - 40}, ${OUT_H - 40})">
+    <g transform="translate(${OUT_W - 40}, ${OUT_H - 32})">
       <text class="addr" text-anchor="end">${shortAddr}</text>
     </g>
 
     ${frontierActive ? `
     <!-- Frontier 26 gold chip — bottom-right above address -->
-    <g transform="translate(${OUT_W - 140}, ${OUT_H - 84})">
-      <rect x="0" y="0" width="112" height="24" rx="2" fill="${accent}" opacity="0.92"/>
-      <text class="chip-text" x="12" y="16">FRONTIER 26</text>
+    <g transform="translate(${OUT_W - 188}, ${OUT_H - 90})">
+      <rect x="0" y="0" width="148" height="30" rx="2" fill="${accent}" opacity="0.95"/>
+      <text class="chip-text" x="14" y="20">FRONTIER 26</text>
     </g>` : ''}
   </svg>`;
 }
